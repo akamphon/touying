@@ -44,7 +44,7 @@
     set std.align(top)
     show: components.cell.with(fill: self.colors.secondary, inset: 1em)
     set std.align(horizon)
-    set text(fill: self.colors.neutral-lightest, weight: "medium", size: 1.2em)
+    set text(fill: self.colors.neutral-lightest, weight: "bold", size: 1.2em)
     components.left-and-right(
       {
         if title != auto {
@@ -107,53 +107,53 @@
 ///
 /// - extra (string, none): The extra information you want to display on the title slide.
 #let title-slide(
-  config: (:),
-  extra: none,
-  ..args,
+    config: (:),
+    extra: none,
+    ..args,
 ) = touying-slide-wrapper(self => {
-  self = utils.merge-dicts(
-    self,
-    config,
-    config-common(freeze-slide-counter: true),
-    config-page(fill: self.colors.neutral-lightest),
+    self = utils.merge-dicts(
+      self,
+      config,
+      config-common(freeze-slide-counter: true),
+      config-page(fill: self.colors.neutral-lightest),
   )
-  let info = self.info + args.named()
-  let body = {
-    set text(fill: self.colors.neutral-darkest)
-    set std.align(horizon)
-    block(
-      width: 100%,
-      inset: 2em,
-      {
-        components.left-and-right(
-          {
-            text(size: 1.3em, text(weight: "medium", info.title))
-            if info.subtitle != none {
-              linebreak()
-              text(size: 0.9em, info.subtitle)
+    let info = self.info + args.named()
+    let body = {
+      set text(fill: self.colors.neutral-darkest)
+      set std.align(horizon)
+      block(
+        width: 100%,
+        inset: 2em,
+        {
+          components.left-and-right(
+            {
+              text(size: 1.4em, weight: "bold", info.title)
+              if info.subtitle != none {
+                  v(0em)
+                  text(size: 1.2em, info.subtitle)
+              }
+            },
+              text(2em, utils.call-or-display(self, info.logo)),
+          )
+            line(length: 100%, stroke: .05em + self.colors.primary)
+            set text(size: 1em)
+            if info.author != none {
+                block(spacing: 1em, info.author)
             }
-          },
-          text(2em, utils.call-or-display(self, info.logo)),
-        )
-        line(length: 100%, stroke: .05em + self.colors.primary)
-        set text(size: .8em)
-        if info.author != none {
-          block(spacing: 1em, info.author)
-        }
-        if info.date != none {
-          block(spacing: 1em, utils.display-info-date(self))
-        }
-        set text(size: .8em)
-        if info.institution != none {
-          block(spacing: 1em, info.institution)
-        }
-        if extra != none {
-          block(spacing: 1em, extra)
-        }
-      },
-    )
-  }
-  touying-slide(self: self, body)
+            if info.date != none {
+                block(spacing: 1em, utils.display-info-date(self))
+            }
+            set text(size: 1em)
+            if info.institution != none {
+                block(spacing: 1em, info.institution)
+            }
+            if extra != none {
+                block(spacing: 1em, extra)
+            }
+        },
+      )
+    }
+    touying-slide(self: self, body)
 })
 
 
@@ -168,29 +168,42 @@
 /// - numbered (boolean): Indicates whether the heading is numbered.
 ///
 /// - body (auto): The body of the section. It will be passed by touying automatically.
-#let new-section-slide(config: (:), level: 1, numbered: true, body) = touying-slide-wrapper(self => {
-  let slide-body = {
-    set std.align(horizon)
-    show: pad.with(20%)
-    set text(size: 1.5em)
-    stack(
-      dir: ttb,
-      spacing: 1em,
-      text(self.colors.neutral-darkest, utils.display-current-heading(level: level, numbered: numbered, style: auto)),
-      block(
-        height: 2pt,
-        width: 100%,
-        spacing: 0pt,
-        components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light),
-      ),
+#let new-section-slide(self: none, body) = touying-slide-wrapper(self => {
+    let header(self) = {
+        set std.align(top)
+        show: components.cell.with(fill: self.colors.secondary, inset: 1em)
+        set std.align(horizon)
+        set text(fill: self.colors.neutral-lightest, weight: "bold", size: 1.2em)
+        align(left,[Outline])
+    }
+    let main-body = {
+        set align(center + horizon)
+        set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
+        components.custom-progressive-outline(depth: 1, title: none, alpha: 20%, vspace: (0.5em,), indent: (2em,))
+    }
+    let footer(self) = {
+        set std.align(bottom)
+        set text(size: 0.8em)
+        pad(
+            .5em,
+            components.left-and-right(
+                text(fill: self.colors.neutral-darkest.lighten(40%), utils.call-or-display(self, self.store.footer)),
+                text(fill: self.colors.neutral-darkest, utils.call-or-display(self, self.store.footer-right)),
+            ),
+        )
+        if self.store.footer-progress {
+            place(bottom, components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light))
+        }
+    }
+    let self = utils.merge-dicts(
+        self,
+        config-page(
+            fill: self.colors.neutral-lightest,
+            header: header,
+            footer: footer,
+        ),
     )
-    text(self.colors.neutral-dark, body)
-  }
-  self = utils.merge-dicts(
-    self,
-    config-page(fill: self.colors.neutral-lightest),
-  )
-  touying-slide(self: self, config: config, slide-body)
+    touying-slide(self: self, main-body)
 })
 
 
@@ -276,7 +289,7 @@
       paper: "presentation-" + aspect-ratio,
       header-ascent: 30%,
       footer-descent: 30%,
-      margin: (top: 3em, bottom: 1.5em, x: 2em),
+      margin: (top: 4em, bottom: 1.5em, x: 2em),
     ),
     config-common(
       slide-fn: slide,
