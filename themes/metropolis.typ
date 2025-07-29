@@ -44,7 +44,7 @@
     set std.align(top)
     show: components.cell.with(fill: self.colors.secondary, inset: 1em)
     set std.align(horizon)
-    set text(fill: self.colors.neutral-lightest, weight: "bold", size: 1.2em)
+    set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
     components.left-and-right(
       {
         if title != auto {
@@ -127,18 +127,19 @@
         {
           components.left-and-right(
             {
-              text(size: 1.4em, weight: "bold", info.title)
+              text(size: 1.4em, weight: "regular", info.title)
               if info.subtitle != none {
                   v(0em)
                   text(size: 1.2em, info.subtitle)
               }
+                v(1em)
             },
               text(2em, utils.call-or-display(self, info.logo)),
           )
             line(length: 100%, stroke: .05em + self.colors.primary)
             set text(size: 1em)
             if info.author != none {
-                block(spacing: 1em, info.author)
+                block(spacing: 2em, info.author)
             }
             if info.date != none {
                 block(spacing: 1em, utils.display-info-date(self))
@@ -173,7 +174,7 @@
         set std.align(top)
         show: components.cell.with(fill: self.colors.secondary, inset: 1em)
         set std.align(horizon)
-        set text(fill: self.colors.neutral-lightest, weight: "bold", size: 1.2em)
+        set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
         align(left,[Outline])
     }
     let main-body = {
@@ -277,19 +278,19 @@
   ),
   header-right: self => self.info.logo,
   footer: none,
-  footer-right: context utils.slide-counter.display() + " / " + utils.last-slide-number,
+  footer-right: context utils.slide-counter.display() + "/" + utils.last-slide-number,
   footer-progress: true,
   ..args,
   body,
 ) = {
-  set text(size: 20pt)
+    set text(size: 18.5pt)
 
   show: touying-slides.with(
     config-page(
       paper: "presentation-" + aspect-ratio,
-      header-ascent: 30%,
+      header-ascent: 0%,
       footer-descent: 30%,
-      margin: (top: 4em, bottom: 1.5em, x: 2em),
+      margin: (top: 3em, bottom: 0.5em, x: 2em),
     ),
     config-common(
       slide-fn: slide,
