@@ -180,7 +180,7 @@
     let main-body = {
         set align(center + horizon)
         set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
-        components.custom-progressive-outline(depth: 1, title: none, alpha: 20%, vspace: (0.5em,), indent: (2em,))
+        components.custom-progressive-outline(depth: 1, title: none, alpha: 20%, vspace: (1em,), indent: (2em,))
     }
     let footer(self) = {
         set std.align(bottom)
@@ -223,6 +223,45 @@
   )
   set text(fill: self.colors.neutral-lightest, size: 1.5em)
   touying-slide(self: self, config: config, std.align(align, body))
+})
+
+/// Touying metropolis outline. Based on the usual custom-progressive-outline.
+#let outline() = touying-slide-wrapper(self => {
+    let header(self) = {
+        set std.align(top)
+        show: components.cell.with(fill: self.colors.secondary, inset: 1em)
+        set std.align(horizon)
+        set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
+        align(left,[Outline])
+    }
+    let main-body = {
+        set align(center + horizon)
+        set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
+        components.custom-progressive-outline(depth: 1, title: none, alpha: 100%, vspace: (1em,), indent: (2em,))
+    }
+    let footer(self) = {
+        set std.align(bottom)
+        set text(size: 0.8em)
+        pad(
+            .5em,
+            components.left-and-right(
+                text(fill: self.colors.neutral-darkest.lighten(40%), utils.call-or-display(self, self.store.footer)),
+                text(fill: self.colors.neutral-darkest, utils.call-or-display(self, self.store.footer-right)),
+            ),
+        )
+        if self.store.footer-progress {
+            place(bottom, components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light))
+        }
+    }
+    let self = utils.merge-dicts(
+        self,
+        config-page(
+            fill: self.colors.neutral-lightest,
+            header: header,
+            footer: footer,
+        ),
+    )
+    touying-slide(self: self, main-body)
 })
 
 
