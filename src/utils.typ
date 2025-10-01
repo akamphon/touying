@@ -10,7 +10,9 @@
 #let add-dicts(dict-a, dict-b) = {
   let res = dict-a
   for key in dict-b.keys() {
-    if key in res and type(res.at(key)) == dictionary and type(dict-b.at(key)) == dictionary {
+    if (
+      key in res and type(res.at(key)) == dictionary and type(dict-b.at(key)) == dictionary
+    ) {
       res.insert(key, add-dicts(res.at(key), dict-b.at(key)))
     } else {
       res.insert(key, dict-b.at(key))
@@ -26,7 +28,10 @@
 ///
 /// -> dictionary
 #let merge-dicts(init-dict, ..dicts) = {
-  assert(dicts.named().len() == 0, message: "You must provide dictionaries as positional arguments")
+  assert(
+    dicts.named().len() == 0,
+    message: "You must provide dictionaries as positional arguments",
+  )
   let res = init-dict
   for dict in dicts.pos() {
     res = add-dicts(res, dict)
@@ -52,7 +57,10 @@
       callback(1.0)
       return
     }
-    let ratio = calc.min(1.0, slide-counter.get().first() / last-slide-counter.final().first())
+    let ratio = calc.min(
+      1.0,
+      slide-counter.get().first() / last-slide-counter.final().first(),
+    )
     callback(ratio)
   }
 )
@@ -120,19 +128,25 @@
 /// - new-body (content): The new body you want to replace the old body with.
 ///
 /// -> content
-#let reconstruct(body-name: "body", labeled: true, named: false, it, ..new-body) = {
+#let reconstruct(
+  body-name: "body",
+  labeled: true,
+  named: false,
+  it,
+  ..new-body,
+) = {
   let fields = it.fields()
   let label = fields.remove("label", default: none)
   let _ = fields.remove(body-name, default: none)
   if named {
     if label != none and labeled {
-      return label-it((it.func())(..fields, ..new-body), label)
+      return [#(it.func())(..fields, ..new-body)#label]
     } else {
       return (it.func())(..fields, ..new-body)
     }
   } else {
     if label != none and labeled {
-      return label-it((it.func())(..fields.values(), ..new-body), label)
+      return [#(it.func())(..fields.values(), ..new-body)#label]
     } else {
       return (it.func())(..fields.values(), ..new-body)
     }
@@ -150,7 +164,13 @@
 ///
 /// -> content
 #let reconstruct-table-like(named: true, labeled: true, it, new-children) = {
-  reconstruct(body-name: "children", named: named, labeled: labeled, it, ..new-children)
+  reconstruct(
+    body-name: "children",
+    named: named,
+    labeled: labeled,
+    it,
+    ..new-children,
+  )
 }
 
 
@@ -204,7 +224,9 @@
 ///
 /// -> bool
 #let is-kind(it, kind) = {
-  is-metadata(it) and type(it.value) == dictionary and it.value.at("kind", default: none) == kind
+  (
+    is-metadata(it) and type(it.value) == dictionary and it.value.at("kind", default: none) == kind
+  )
 }
 
 
@@ -241,7 +263,10 @@
 /// -> dictionary
 #let methods(self) = {
   assert(type(self) == dictionary, message: "self must be a dictionary")
-  assert("methods" in self and type(self.methods) == dictionary, message: "self.methods must be a dictionary")
+  assert(
+    "methods" in self and type(self.methods) == dictionary,
+    message: "self.methods must be a dictionary",
+  )
   let methods = (:)
   for key in self.methods.keys() {
     if type(self.methods.at(key)) == function {
@@ -300,10 +325,17 @@
   ) {
     self.methods.convert-label-to-short-heading
   } else {
-    (self: none, lbl) => titlecase(lbl.replace(regex("^[^:]*:"), "").replace("_", " ").replace("-", " "))
+    (self: none, lbl) => titlecase(
+      lbl.replace(regex("^[^:]*:"), "").replace("_", " ").replace("-", " "),
+    )
   }
-  convert-label-to-short-heading = convert-label-to-short-heading.with(self: self)
-  assert(type(it) == content and it.func() == heading, message: "it must be a heading")
+  convert-label-to-short-heading = convert-label-to-short-heading.with(
+    self: self,
+  )
+  assert(
+    type(it) == content and it.func() == heading,
+    message: "it must be a heading",
+  )
   if not it.has("label") {
     return it.body
   }
@@ -329,7 +361,9 @@
     ))
     return headings.at(-1, default: none)
   }
-  let headings = query(heading).filter(h => h.location().page() <= current-page and h.level <= depth)
+  let headings = query(heading).filter(h => (
+    h.location().page() <= current-page and h.level <= depth
+  ))
   if headings == () {
     return
   }
@@ -385,7 +419,11 @@
   ..setting-args,
 ) = (
   context {
-    let current-heading = current-heading(level: level, hierachical: hierachical, depth: depth)
+    let current-heading = current-heading(
+      level: level,
+      hierachical: hierachical,
+      depth: depth,
+    )
     if current-heading != none {
       if style == none {
         current-heading
@@ -417,13 +455,30 @@
 /// - depth (int): The maximum depth of the heading to search. Usually, it should be set as slide-level.
 ///
 /// -> content
-#let display-current-heading-number(level: auto, numbering: auto, hierachical: true, depth: 9999) = (
+#let display-current-heading-number(
+  level: auto,
+  numbering: auto,
+  hierachical: true,
+  depth: 9999,
+) = (
   context {
-    let current-heading = current-heading(level: level, hierachical: hierachical, depth: depth)
-    if current-heading != none and numbering == auto and current-heading.numbering != none {
-      _typst-builtin-numbering(current-heading.numbering, ..counter(heading).at(current-heading.location()))
+    let current-heading = current-heading(
+      level: level,
+      hierachical: hierachical,
+      depth: depth,
+    )
+    if (
+      current-heading != none and numbering == auto and current-heading.numbering != none
+    ) {
+      _typst-builtin-numbering(
+        current-heading.numbering,
+        ..counter(heading).at(current-heading.location()),
+      )
     } else if current-heading != none and numbering != auto {
-      _typst-builtin-numbering(numbering, ..counter(heading).at(current-heading.location()))
+      _typst-builtin-numbering(
+        numbering,
+        ..counter(heading).at(current-heading.location()),
+      )
     }
   }
 )
@@ -446,11 +501,18 @@
   hierachical: true,
   depth: 9999,
   setting: body => body,
-  style: (self: none, current-heading) => short-heading(self: self, current-heading),
+  style: (self: none, current-heading) => short-heading(
+    self: self,
+    current-heading,
+  ),
   ..setting-args,
 ) = (
   context {
-    let current-heading = current-heading(level: level, hierachical: hierachical, depth: depth)
+    let current-heading = current-heading(
+      level: level,
+      hierachical: hierachical,
+      depth: depth,
+    )
     if current-heading != none {
       if style == none {
         current-heading
@@ -516,7 +578,9 @@
     } else if it.func() == list.item {
       "\n" + indent * " " + "- " + indent-markup-text(it.body)
     } else if it.func() == terms.item {
-      "\n" + indent * " " + "/ " + markup-text(it.term) + ": " + indent-markup-text(it.description)
+      (
+        "\n" + indent * " " + "/ " + markup-text(it.term) + ": " + indent-markup-text(it.description)
+      )
     } else if it.func() == linebreak {
       "\n" + indent * " "
     } else if it.func() == parbreak {
@@ -678,7 +742,12 @@
   layout(layout-size => {
     let content-width = measure(content).width
     let width = _size-to-pt(width, layout-size.width)
-    if (content-width != 0pt and ((shrink and (width < content-width)) or (grow and (width > content-width)))) {
+    if (
+      content-width != 0pt
+        and (
+          (shrink and (width < content-width)) or (grow and (width > content-width))
+        )
+    ) {
       let ratio = width / content-width * 100%
       scale(
         // The box keeps content from prematurely wrapping
@@ -765,7 +834,9 @@
 /// - alpha (float): The new alpha value.
 ///
 /// -> color
-#let update-alpha(color, alpha) = color.opacify(100%).transparentize(100% - alpha)
+#let update-alpha(color, alpha) = (
+  color.opacify(100%).transparentize(100% - alpha)
+)
 
 
 /// Cover content with a transparent rectangle.
@@ -865,7 +936,10 @@
 /// Example: `config-methods(alert: utils.alert-with-primary-color)`
 ///
 /// -> content
-#let alert-with-primary-color(self: none, body) = text(fill: self.colors.primary, body)
+#let alert-with-primary-color(self: none, body) = text(
+  fill: self.colors.primary,
+  body,
+)
 
 
 /// Alert content.
@@ -938,7 +1012,9 @@
   } else if type(visible-subslides) == str {
     let parts = _parse-subslide-indices(visible-subslides)
     check-visible(idx, parts)
-  } else if type(visible-subslides) == content and visible-subslides.has("text") {
+  } else if (
+    type(visible-subslides) == content and visible-subslides.has("text")
+  ) {
     let parts = _parse-subslide-indices(visible-subslides.text)
     check-visible(idx, parts)
   } else if type(visible-subslides) == dictionary {
@@ -956,7 +1032,9 @@
 
     lower-okay and upper-okay
   } else {
-    panic("you may only provide a single integer, an array of integers, or a string")
+    panic(
+      "you may only provide a single integer, an array of integers, or a string",
+    )
   }
 }
 
@@ -979,7 +1057,9 @@
     }
     last
   } else {
-    panic("you may only provide a single integer, an array of integers, or a string")
+    panic(
+      "you may only provide a single integer, an array of integers, or a string",
+    )
   }
 }
 
@@ -1091,7 +1171,12 @@
 ///   Important: If you use a zero-length content like a context expression, you should set `stretch: false`.
 ///
 /// -> content
-#let alternatives-match(self: none, subslides-contents, position: bottom + left, stretch: false) = {
+#let alternatives-match(
+  self: none,
+  subslides-contents,
+  position: bottom + left,
+  stretch: false,
+) = {
   let subslides-contents = if type(subslides-contents) == dictionary {
     subslides-contents.pairs()
   } else {
@@ -1248,7 +1333,10 @@
     }
     pdfpc.speaker-note(raw-text)
   }
-  let show-notes-on-second-screen = self.at("show-notes-on-second-screen", default: none)
+  let show-notes-on-second-screen = self.at(
+    "show-notes-on-second-screen",
+    default: none,
+  )
   assert(
     show-notes-on-second-screen in (none, bottom, right),
     message: "`show-notes-on-second-screen` should be `none`, `bottom` or `right`",
