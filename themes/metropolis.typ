@@ -124,54 +124,54 @@
 ///
 /// - extra (string, none): The extra information you want to display on the title slide.
 #let title-slide(
-    config: (:),
-    extra: none,
-    ..args,
+  config: (:),
+  extra: none,
+  ..args,
 ) = touying-slide-wrapper(self => {
-    self = utils.merge-dicts(
-      self,
-      config,
-      config-common(freeze-slide-counter: true),
-      config-page(fill: self.colors.neutral-lightest),
+  self = utils.merge-dicts(
+    self,
+    config,
+    config-common(freeze-slide-counter: true),
+    config-page(fill: self.colors.neutral-lightest),
   )
-    let info = self.info + args.named()
-    let body = {
-      set text(fill: self.colors.neutral-darkest)
-      set std.align(horizon)
-      block(
-        width: 100%,
-        inset: 2em,
-        {
-          components.left-and-right(
-            {
-              text(size: 1.4em, weight: "regular", info.title)
-              if info.subtitle != none {
-                  v(0em)
-                  text(size: 1.2em, info.subtitle)
-              }
-                v(1em)
-            },
-              text(2em, utils.call-or-display(self, info.logo)),
-          )
-            line(length: 100%, stroke: .05em + self.colors.primary)
-            set text(size: 1em)
-            if info.author != none {
-                block(spacing: 2em, info.author)
+  let info = self.info + args.named()
+  let body = {
+    set text(fill: self.colors.neutral-darkest)
+    set std.align(horizon)
+    block(
+      width: 100%,
+      inset: 2em,
+      {
+        components.left-and-right(
+          {
+            text(size: 1.4em, weight: "regular", info.title)
+            if info.subtitle != none {
+              v(0em)
+              text(size: 1.2em, info.subtitle)
             }
-            if info.date != none {
-                block(spacing: 1em, utils.display-info-date(self))
-            }
-            set text(size: 1em)
-            if info.institution != none {
-                block(spacing: 1em, info.institution)
-            }
-            if extra != none {
-                block(spacing: 1em, extra)
-            }
-        },
-      )
-    }
-    touying-slide(self: self, body)
+            v(1em)
+          },
+          text(2em, utils.call-or-display(self, info.logo)),
+        )
+        line(length: 100%, stroke: .05em + self.colors.primary)
+        set text(size: 1em)
+        if info.author != none {
+          block(spacing: 2em, info.author)
+        }
+        if info.date != none {
+          block(spacing: 1em, utils.display-info-date(self))
+        }
+        set text(size: 1em)
+        if info.institution != none {
+          block(spacing: 1em, info.institution)
+        }
+        if extra != none {
+          block(spacing: 1em, extra)
+        }
+      },
+    )
+  }
+  touying-slide(self: self, body)
 })
 
 
@@ -190,43 +190,59 @@
   config: (:),
   level: 1,
   numbered: true,
-  body
+  body,
 ) = touying-slide-wrapper(self => {
-    let header(self) = {
-        set std.align(top)
-        show: components.cell.with(fill: self.colors.secondary, inset: 1em)
-        set std.align(horizon)
-        set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
-        align(left,[Outline])
-    }
-    let main-body = {
-        set align(center + horizon)
-        set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
-        components.custom-progressive-outline(depth: 1, title: none, alpha: 20%, vspace: (1em,), indent: (2em,))
-    }
-    let footer(self) = {
-        set std.align(bottom)
-        set text(size: 0.8em)
-        pad(
-            .5em,
-            components.left-and-right(
-                text(fill: self.colors.neutral-darkest.lighten(40%), utils.call-or-display(self, self.store.footer)),
-                text(fill: self.colors.neutral-darkest, utils.call-or-display(self, self.store.footer-right)),
-            ),
-        )
-        if self.store.footer-progress {
-            place(bottom, components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light))
-        }
-    }
-    let self = utils.merge-dicts(
-        self,
-        config-page(
-            fill: self.colors.neutral-lightest,
-            header: header,
-            footer: footer,
-        ),
+  let header(self) = {
+    set std.align(top)
+    show: components.cell.with(fill: self.colors.secondary, inset: 1em)
+    set std.align(horizon)
+    set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
+    align(left, [Outline])
+  }
+  let main-body = {
+    set align(center + horizon)
+    set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
+    components.custom-progressive-outline(
+      depth: 1,
+      title: none,
+      alpha: 20%,
+      vspace: (1em,),
+      indent: (2em,),
     )
-    touying-slide(self: self, main-body)
+  }
+  let footer(self) = {
+    set std.align(bottom)
+    set text(size: 0.8em)
+    pad(
+      .5em,
+      components.left-and-right(
+        text(
+          fill: self.colors.neutral-darkest.lighten(40%),
+          utils.call-or-display(self, self.store.footer),
+        ),
+        text(fill: self.colors.neutral-darkest, utils.call-or-display(
+          self,
+          self.store.footer-right,
+        )),
+      ),
+    )
+    if self.store.footer-progress {
+      place(bottom, components.progress-bar(
+        height: 2pt,
+        self.colors.primary,
+        self.colors.primary-light,
+      ))
+    }
+  }
+  let self = utils.merge-dicts(
+    self,
+    config-page(
+      fill: self.colors.neutral-lightest,
+      header: header,
+      footer: footer,
+    ),
+  )
+  touying-slide(self: self, main-body)
 })
 
 
@@ -253,41 +269,57 @@
 
 /// Touying metropolis outline. Based on the usual custom-progressive-outline.
 #let outline() = touying-slide-wrapper(self => {
-    let header(self) = {
-        set std.align(top)
-        show: components.cell.with(fill: self.colors.secondary, inset: 1em)
-        set std.align(horizon)
-        set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
-        align(left,[Outline])
-    }
-    let main-body = {
-        set align(center + horizon)
-        set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
-        components.custom-progressive-outline(depth: 1, title: none, alpha: 100%, vspace: (1em,), indent: (2em,))
-    }
-    let footer(self) = {
-        set std.align(bottom)
-        set text(size: 0.8em)
-        pad(
-            .5em,
-            components.left-and-right(
-                text(fill: self.colors.neutral-darkest.lighten(40%), utils.call-or-display(self, self.store.footer)),
-                text(fill: self.colors.neutral-darkest, utils.call-or-display(self, self.store.footer-right)),
-            ),
-        )
-        if self.store.footer-progress {
-            place(bottom, components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light))
-        }
-    }
-    let self = utils.merge-dicts(
-        self,
-        config-page(
-            fill: self.colors.neutral-lightest,
-            header: header,
-            footer: footer,
-        ),
+  let header(self) = {
+    set std.align(top)
+    show: components.cell.with(fill: self.colors.secondary, inset: 1em)
+    set std.align(horizon)
+    set text(fill: self.colors.neutral-lightest, weight: "regular", size: 1.2em)
+    align(left, [Outline])
+  }
+  let main-body = {
+    set align(center + horizon)
+    set text(fill: self.colors.neutral-darkest, size: 1em, weight: 300)
+    components.custom-progressive-outline(
+      depth: 1,
+      title: none,
+      alpha: 100%,
+      vspace: (1em,),
+      indent: (2em,),
     )
-    touying-slide(self: self, main-body)
+  }
+  let footer(self) = {
+    set std.align(bottom)
+    set text(size: 0.8em)
+    pad(
+      .5em,
+      components.left-and-right(
+        text(
+          fill: self.colors.neutral-darkest.lighten(40%),
+          utils.call-or-display(self, self.store.footer),
+        ),
+        text(fill: self.colors.neutral-darkest, utils.call-or-display(
+          self,
+          self.store.footer-right,
+        )),
+      ),
+    )
+    if self.store.footer-progress {
+      place(bottom, components.progress-bar(
+        height: 2pt,
+        self.colors.primary,
+        self.colors.primary-light,
+      ))
+    }
+  }
+  let self = utils.merge-dicts(
+    self,
+    config-page(
+      fill: self.colors.neutral-lightest,
+      header: header,
+      footer: footer,
+    ),
+  )
+  touying-slide(self: self, main-body)
 })
 
 
@@ -350,7 +382,7 @@
   ..args,
   body,
 ) = {
-    set text(size: 18.5pt)
+  set text(size: 18.5pt)
 
   show: touying-slides.with(
     config-page(
