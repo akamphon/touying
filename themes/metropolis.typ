@@ -62,12 +62,22 @@
     pad(
       .5em,
       components.left-and-right(
-        text(fill: self.colors.neutral-darkest.lighten(40%), utils.call-or-display(self, self.store.footer)),
-        text(fill: self.colors.neutral-darkest, utils.call-or-display(self, self.store.footer-right)),
+        text(
+          fill: self.colors.neutral-darkest.lighten(40%),
+          utils.call-or-display(self, self.store.footer),
+        ),
+        text(fill: self.colors.neutral-darkest, utils.call-or-display(
+          self,
+          self.store.footer-right,
+        )),
       ),
     )
     if self.store.footer-progress {
-      place(bottom, components.progress-bar(height: 2pt, self.colors.primary, self.colors.primary-light))
+      place(bottom, components.progress-bar(
+        height: 2pt,
+        self.colors.primary,
+        self.colors.primary-light,
+      ))
     }
   }
   let self = utils.merge-dicts(
@@ -84,7 +94,14 @@
     show: setting
     body
   }
-  touying-slide(self: self, config: config, repeat: repeat, setting: new-setting, composer: composer, ..bodies)
+  touying-slide(
+    self: self,
+    config: config,
+    repeat: repeat,
+    setting: new-setting,
+    composer: composer,
+    ..bodies,
+  )
 })
 
 
@@ -102,7 +119,7 @@
 ///
 /// #title-slide(subtitle: [Subtitle], extra: [Extra information])
 /// ```
-/// 
+///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For several configurations, you can use `utils.merge-dicts` to merge them.
 ///
 /// - extra (string, none): The extra information you want to display on the title slide.
@@ -161,7 +178,7 @@
 /// New section slide for the presentation. You can update it by updating the `new-section-slide-fn` argument for `config-common` function.
 ///
 /// Example: `config-common(new-section-slide-fn: new-section-slide.with(numbered: false))`
-/// 
+///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For several configurations, you can use `utils.merge-dicts` to merge them.
 ///
 /// - level (int): The level of the heading.
@@ -169,7 +186,12 @@
 /// - numbered (boolean): Indicates whether the heading is numbered.
 ///
 /// - body (auto): The body of the section. It will be passed by touying automatically.
-#let new-section-slide(self: none, body) = touying-slide-wrapper(self => {
+#let new-section-slide(
+  config: (:),
+  level: 1,
+  numbered: true,
+  body
+) = touying-slide-wrapper(self => {
     let header(self) = {
         set std.align(top)
         show: components.cell.with(fill: self.colors.secondary, inset: 1em)
@@ -211,11 +233,15 @@
 /// Focus on some content.
 ///
 /// Example: `#focus-slide[Wake up!]`
-/// 
+///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For several configurations, you can use `utils.merge-dicts` to merge them.
 ///
 /// - align (alignment): The alignment of the content. Default is `horizon + center`.
-#let focus-slide(config: (:), align: horizon + center, body) = touying-slide-wrapper(self => {
+#let focus-slide(
+  config: (:),
+  align: horizon + center,
+  body,
+) = touying-slide-wrapper(self => {
   self = utils.merge-dicts(
     self,
     config-common(freeze-slide-counter: true),
@@ -317,7 +343,9 @@
   ),
   header-right: self => self.info.logo,
   footer: none,
-  footer-right: context utils.slide-counter.display() + "/" + utils.last-slide-number,
+  footer-right: context utils.slide-counter.display()
+    + " / "
+    + utils.last-slide-number,
   footer-progress: true,
   ..args,
   body,
