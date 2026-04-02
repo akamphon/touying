@@ -1,4 +1,5 @@
 #import "utils.typ"
+#import "magic.typ": warning
 
 #let cell = block.with(
   width: 100%,
@@ -654,3 +655,71 @@
     ),
   ),
 )
+
+/// A non-breakable page container that prevents slide content from overflowing
+/// to the next page. When used, content that exceeds the slide height will be
+/// constrained rather than creating additional pages.
+///
+/// This is useful for ensuring a strict one-to-one mapping between source
+/// slides and output pages, which is important in agentic workflows where
+/// an agent needs to reason about slide boundaries.
+///
+/// - clip (bool): Whether to clip overflowing content. When `true`, content
+///   that exceeds the slide height will be visually truncated. Default is `false`.
+///
+/// - detect-overflow (bool): Whether to detect and panic on overflow. When `true`,
+///   a `layout` + `measure` check is performed and `panic()` is called if the
+///   content height exceeds the available container height. When `false`, no
+///   overflow detection is performed (avoids the `layout` overhead). Default is `false`.
+///
+/// - body (content): The slide content to constrain within a single page.
+///
+/// -> content
+#let page-container(self: none, clip: false, detect-overflow: false, body) = {
+  let tight-block-args = (
+    above: 0pt,
+    below: 0pt,
+    inset: (:),
+    outset: (:),
+    radius: (:),
+    spacing: 0pt,
+    sticky: false,
+    stroke: (:),
+  )
+  if detect-overflow {
+    // Detect and warn on overflow
+    layout(container-size => {
+      let content-size = measure(block(
+        ..tight-block-args,
+        width: container-size.width,
+        body,
+      ))
+      let content-height = content-size.height
+      let available-height = container-size.height
+      if content-height > available-height {
+        warning(
+          "touying: slide content overflows at page "
+            + repr(here().page())
+            + " (slide "
+            + str(utils.slide-counter.get().last())
+            + ", subslide "
+            + str(self.subslide)
+            + ", content height: "
+            + repr(content-height)
+            + ", available height: "
+            + repr(available-height)
+            + ").",
+        )
+      }
+    })
+  }
+  // Disable breakability to prevent overflowing content from creating new pages
+  block(
+    ..tight-block-args,
+    breakable: false,
+    clip: clip,
+    height: 1fr,
+    width: 100%,
+    body,
+  )
+}

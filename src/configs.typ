@@ -112,6 +112,12 @@
 
 /// The common configurations of the slides.
 ///
+/// - breakable (bool): Whether to allow slide content to overflow to the next page. When `true` (default), content that exceeds the slide height will automatically create new pages. When `false`, content is constrained to a single page using a non-breakable block, which is useful for ensuring a strict one-to-one mapping between source slides and output pages in agentic workflows. Default is `true`.
+///
+/// - clip (bool): Whether to clip overflowing slide content when `breakable` is `false`. When `true`, content that exceeds the slide height will be visually truncated. When `false`, overflowing content remains visible but does not create new pages. Only takes effect when `breakable` is `false`. Default is `false`.
+///
+/// - detect-overflow (bool): Whether to detect and warn on slide content overflow when `breakable` is `false`. When `true`, a layout measurement is performed and a warning is emitted if the content height exceeds the available slide height, which is useful for catching overflow early in agentic workflows without aborting compilation. When `false`, no overflow detection is performed. Only takes effect when `breakable` is `false`. Default is `true`.
+///
 /// - handout (bool): Whether to enable the handout mode. By default, it retains only the last subslide of each slide, but this can be overridden via `handout-subslides`. Default is `false`.
 ///
 /// - handout-subslides (none, int, array, str): The subslides to include in handout mode. Accepts the same format as `visible-subslides` (e.g. `2`, `(1, 3)`, `"2-"`, `"1, 3-5"`). When `none`, the last subslide is used (default behavior). Default is `none`.
@@ -220,6 +226,9 @@
 ///
 /// -> dictionary
 #let config-common(
+  breakable: _default,
+  clip: _default,
+  detect-overflow: _default,
   handout: _default,
   handout-subslides: _default,
   slide-level: _default,
@@ -274,6 +283,9 @@
   assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
   return (
     _get-dict-without-default((
+      breakable: breakable,
+      clip: clip,
+      detect-overflow: detect-overflow,
       handout: handout,
       handout-subslides: handout-subslides,
       slide-level: slide-level,
@@ -691,6 +703,9 @@
 /// The default configuration values used when no explicit configuration is provided.
 #let default-config = utils.merge-dicts(
   config-common(
+    breakable: true,
+    clip: false,
+    detect-overflow: true,
     handout: false,
     handout-subslides: none,
     slide-level: 2,

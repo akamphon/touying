@@ -1,4 +1,16 @@
-#import "utils.typ": current-heading
+// ---------------------------------------------------------------------
+// Warning
+// ---------------------------------------------------------------------
+
+
+/// Display a warning message with `set text(font: ..)` magic.
+///
+/// - message (str): The warning message.
+///
+/// -> content
+#let warning(message) = {
+  set text(font: "[WARNING] " + message)
+}
 
 // ---------------------------------------------------------------------
 // List, Enum, and Terms
