@@ -1,5 +1,4 @@
 #import "pdfpc.typ"
-
 /// Add page margin dictionary to another page margin dictionary.
 ///
 /// Example: `add-page-margin-dicts((top: 1cm, x: 2cm), (y: 3em))` returns `(x: 2cm, y: 3em)`
@@ -343,6 +342,36 @@
   return [#it]
 }
 
+/// recursively checks if `it` has a text in it
+///
+/// - it (content): the content to check
+/// - transparentize-table (bool): Whether to assume tables contain text. If `false` tables will get searched completely for available text.
+/// -> bool
+#let _contains-text(it, transparentize-table) = {
+  if type(it) != content {
+    return false
+  }
+  if it.func() in (text, math.equation) {
+    return true
+  }
+  if it.has("body") {
+    return _contains-text(it.body, transparentize-table)
+  }
+  if it.has("child") {
+    return _contains-text(it.child, transparentize-table)
+  }
+  if it.has("children") {
+    if it.func() == table {
+      return transparentize-table
+    }
+    for child in it.children {
+      if _contains-text(child, transparentize-table) {
+        return true
+      }
+    }
+  }
+  return false
+}
 
 /// Wrap a function with a `self` parameter to make it callable as a method.
 ///
@@ -859,10 +888,17 @@
 
 #let _size-to-pt(size, container-dimension) = {
   let to-convert = size
-  if type(size) == ratio {
-    to-convert = container-dimension * size
+  if type(size) == fraction {
+    let fr = repr(size * 1000000) //avoid capped precision
+    to-convert = float(fr.slice(0, fr.len() - 2)) / 1000000
   }
-  measure(v(to-convert)).height
+  if type(to-convert) in (int, float, ratio) {
+    //nice just a multiplication
+    to-convert = container-dimension * to-convert
+  } else {
+    to-convert = measure(v(to-convert)).height //get in pt if em
+  }
+  to-convert
 }
 
 #let _limit-content-width(width: none, body, container-size) = {
@@ -876,9 +912,10 @@
 }
 
 
-/// Fit content to specified height.
+/// Fit content to specified/remaining height.
 ///
-/// Example: `#utils.fit-to-height(100%)[BIG]`
+/// Example: `#utils.fit-to-height[BIG]`
+/// - height (length, fraction, relative): The height to fit the content to. For example, `height: 50%` will fit the content to half of the slide height. If given as a fraction, it will be based on the available height after everything else is evaluated, similar to how fractional lengths behave for table column widths. Default is `1fr` which means to fit the content to the full available rest height.
 ///
 /// - width (length, fraction, relative): Will determine the width of the content after scaling. So, if you want the scaled content to fill half of the slide width, you can use `width: 50%`.
 ///
@@ -888,22 +925,49 @@
 ///
 /// - shrink (bool): Indicates whether the content should be scaled down if it is larger than the available height. Default is `true`.
 ///
-/// - height (length): The height to fit the content to.
+/// - reflow (bool): Whether to allow text reflow when scaling with auto width. Default is `true`. Only works when `width` is `auto` and the body contains text.
 ///
-/// - body (content): The content to fit.
+/// - force-height (bool): Whether to force the content to occupy the full height and not have it fill the available width. Only matters when `reflow` is `true` and `width` is auto. By default `false`. When text is reflowed, it makes sense to use as much width as possible and not force the content to be as tall as possible. Lines are naturally discrete and thus so are the possible scaling factors to fit the lines to the available height. Forcing the height may lead to the text not occupying the available width.
+///
+/// - body (content): The content to fit. If two positional arguments are given, this will be height instead.
+///
+/// - args (arguments): For convenience and compatibility with older versions, passing in height as a positional argument is still supported. If two positional arguments are given, the first one is the width and the second one is the body.
 ///
 /// -> content
 #let fit-to-height(
-  width: none,
+  height: 1fr,
+  width: auto,
   prescale-width: none,
   grow: true,
   shrink: true,
-  height,
+  reflow: true,
+  force-height: false,
   body,
+  ..args,
 ) = {
+  assert(
+    args.pos().len() <= 1,
+    message: "Only two positional arguments allowed, which will be interpreted as height and body.",
+  )
+  if args.pos().len() == 1 {
+    height = body
+    body = args.pos().at(0)
+  }
   context {
-    layout(container-size => {
-      let available-height = _size-to-pt(height, container-size.height)
+    let layout-content(
+      width: auto,
+      prescale-width: none,
+      grow: true,
+      shrink: true,
+      height,
+      body,
+    ) = layout(container-size => {
+      let available-height = 0pt
+      if type(height) == fraction {
+        available-height = container-size.height
+      } else {
+        available-height = _size-to-pt(height, container-size.height)
+      }
       // Provide a sensible initial width, which will define initial scale parameters.
       // Note this is different from the post-scale width, which is a limiting factor
       // on the allowable scaling ratio
@@ -913,26 +977,107 @@
         container-size,
       )
 
-      // post-scaling width
-      let mutable-width = width
-      if width == none {
-        mutable-width = container-size.width
-      }
-      mutable-width = _size-to-pt(mutable-width, container-size.width)
-
+      //get size of the content when boxed to the prescale width, which is the initial size before scaling, may be different from the container-width
       let size = measure(boxed-content)
       if size.height == 0pt or size.width == 0pt {
         return body
       }
       let h-ratio = available-height / size.height
+
+      // post-scaling width
+      let mutable-width = width
+      if width == none or width == auto {
+        mutable-width = container-size.width
+      }
+      mutable-width = _size-to-pt(mutable-width, container-size.width)
+
       let w-ratio = mutable-width / size.width
       let ratio = calc.min(h-ratio, w-ratio) * 100%
 
+      if width == auto and reflow and _contains-text(body, false) {
+        //height is good rn, but width may be too small.
+        // get the current ratio of used/available width and scale such that we fill it. use sqrt trick to allow good flow.
+        // then height may again be slightly too small. repeat that.
+
+        let adjust-width(ratio, body, boxed-content, size) = {
+          let w-ratio = (
+            measure(scale(
+              ratio,
+              boxed-content,
+              origin: top + left,
+              reflow: true,
+            )).width
+              / size.width
+          )
+
+          let _boxed-content = block(
+            width: size.width / calc.sqrt(w-ratio), //increase width by sqrt of w-ratio
+            body,
+          )
+          ratio = calc.sqrt(w-ratio) * 100%
+          return (ratio, _boxed-content)
+        }
+
+        let adjust-height(ratio, body, boxed-content, size) = {
+          let h-ratio = (
+            measure(scale(
+              ratio,
+              boxed-content,
+              origin: top + left,
+              reflow: true,
+            )).height
+              / size.height
+          )
+
+          let _boxed-content = block(
+            width: size.width / float(ratio) * calc.sqrt(h-ratio), //reduce width by sqrt of h-ratio
+            body,
+          )
+          ratio *= calc.sqrt(1 / h-ratio)
+
+          h-ratio = (
+            measure(scale(
+              ratio,
+              _boxed-content,
+              origin: top + left,
+              reflow: true,
+            )).height
+              / size.height
+          )
+          ratio /= h-ratio
+
+          return (ratio, _boxed-content)
+        }
+
+        //improve iteratively, 2 seems enough.
+        for i in range(2) {
+          (ratio, boxed-content) = adjust-width(ratio, body, boxed-content, (
+            width: mutable-width,
+            height: available-height,
+          ))
+          (ratio, boxed-content) = adjust-height(ratio, body, boxed-content, (
+            width: mutable-width,
+            height: available-height,
+          ))
+        }
+        if not force-height {
+          //fix the width one last time linearly.
+          let scaled-width = measure(scale(
+            ratio,
+            boxed-content,
+            origin: top + left,
+            reflow: true,
+          )).width
+          let current-box-width = measure(boxed-content).width
+          boxed-content = box(
+            width: current-box-width * (mutable-width / scaled-width),
+            body,
+          )
+        }
+      }
       if ((shrink and (ratio < 100%)) or (grow and (ratio > 100%))) {
-        let new-width = size.width * ratio
         scale(
-          x: ratio,
-          y: ratio,
+          ratio,
           origin: top + left,
           boxed-content,
           reflow: true,
@@ -941,6 +1086,28 @@
         body
       }
     })
+    if type(height) == fraction {
+      block(
+        height: height,
+        layout-content(
+          width: width,
+          prescale-width: prescale-width,
+          grow: grow,
+          shrink: shrink,
+          height,
+          body,
+        ),
+      )
+    } else {
+      layout-content(
+        width: width,
+        prescale-width: prescale-width,
+        grow: grow,
+        shrink: shrink,
+        height,
+        body,
+      )
+    }
   }
 }
 
@@ -949,18 +1116,29 @@
 ///
 /// Example: `#utils.fit-to-width(100%)[BIG]`
 ///
+/// - width (length, fraction, relative): The width to fit the content to. For example, `width: 50%` will fit the content to half of the slide width. If given as a fraction, it will be based on the available width after everything else is evaluated, similar to how fractional lengths behave for table column widths. Default is `1fr` which means to fit the content to the full available rest width.
+///
 /// - grow (bool): Indicates whether the content should be scaled up if it is smaller than the available width. Default is `true`.
 ///
 /// - shrink (bool): Indicates whether the content should be scaled down if it is larger than the available width. Default is `true`.
 ///
-/// - width (length, fraction, relative): The width to fit the content to.
+/// - body (content): The content to fit. If two positional arguments are given, this will be width instead.
 ///
-/// - body (content): The content to fit.
+/// - args (arguments): For convenience and compatibility with older versions, passing in width as a positional argument is still supported. If two positional arguments are given, the first one is the width and the second one is the body.
 ///
 /// -> content
-#let fit-to-width(grow: true, shrink: true, width, content) = {
+#let fit-to-width(width: 1fr, grow: true, shrink: true, body, ..args) = {
+  assert(
+    args.pos().len() <= 1,
+    message: "Only two positional arguments allowed, which will be interpreted as width and body.",
+  )
+  if args.pos().len() == 1 {
+    width = body
+    body = args.pos().at(0)
+  }
+
   layout(layout-size => {
-    let content-width = measure(content).width
+    let content-width = measure(body).width
     let width = _size-to-pt(width, layout-size.width)
     if (
       content-width != 0pt
@@ -972,14 +1150,14 @@
       let ratio = width / content-width * 100%
       scale(
         // The box keeps content from prematurely wrapping
-        box(content, width: content-width),
+        box(body, width: content-width),
         origin: top + left,
         x: ratio,
         y: ratio,
         reflow: true,
       )
     } else {
-      content
+      body
     }
   })
 }
@@ -1273,33 +1451,6 @@
     ),
     body,
   )
-}
-
-// recursively checks if `it` has a text in it
-#let _contains-text(it, transparentize-table) = {
-  if type(it) != content {
-    return false
-  }
-  if it.func() in (text, math.equation) {
-    return true
-  }
-  if it.has("body") {
-    return _contains-text(it.body, transparentize-table)
-  }
-  if it.has("child") {
-    return _contains-text(it.child, transparentize-table)
-  }
-  if it.has("children") {
-    if it.func() == table {
-      return transparentize-table
-    }
-    for child in it.children {
-      if _contains-text(child, transparentize-table) {
-        return true
-      }
-    }
-  }
-  return false
 }
 
 /// Cover content with a text-color-changing mechanism.
