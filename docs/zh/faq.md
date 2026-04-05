@@ -884,6 +884,39 @@ Content here.
 ]
 ```
 
+### 如何访问全局或幻灯片的配置信息？
+
+在需要获取配置的位置使用 `touying-get-config`。由于配置只能在 `context` 时机访问，因此基于此进行计算可能会导致问题。
+> 如果在含有局部配置的幻灯片内调用此函数，返回的将是局部配置，而非全局配置。
+```example
+>>> #import "@preview/touying:0.7.1": *
+#import themes.simple: *
+#show: simple-theme.with(
+  config-info(author: "Beautiful Name")
+)
+#slide(config:config-colors(primary: rgb("ABCDEF")))[
+  #touying-get-config().info.author
+  
+  #touying-get-config().colors.primary
+]
+```
+
+### 如何编译 Touying 演示文稿？
+
+Touying 是一个纯 Typst 包，无需额外的构建步骤：
+
+```bash
+typst compile slides.typ
+```
+
+编辑时进行实时预览：
+
+```bash
+typst watch slides.typ
+```
+
+或者使用 [Typst Preview](https://marketplace.visualstudio.com/items?itemName=mgt19937.typst-preview) VS Code 扩展进行即时编辑器内预览。
+
 ### 如何创建多文件演示文稿？
 
 从主入口文件导入 `lib.typ`，并用 `include` 引入各章节：

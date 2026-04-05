@@ -34,6 +34,8 @@
   body: body,
 ))<touying-temporary-mark>]
 
+//get-config is in src/config.typ as we need the default-config.
+
 
 /// Begin the appendix of the presentation. The slide counter is frozen at the last non-appendix slide, so appendix slides do not affect the total slide count shown in footers.
 ///
