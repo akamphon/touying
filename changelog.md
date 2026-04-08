@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.7.1
+
+### Features
+
+- feat(agents): `breakable` and `clip` options to avoid slide overflow ([#336](https://github.com/touying-typ/touying/pull/336))
+- feat(components): add `lazy-v` (`lazy-h`) and `lazy-layout` for equalizing multi-column (-row) block heights (widths) ([#339](https://github.com/touying-typ/touying/pull/339))
+- feat: additional `contact` and `extra` field in `config-info` ([#342](https://github.com/touying-typ/touying/pull/342))
+- feat: `touying-get-config` function ([#333](https://github.com/touying-typ/touying/pull/333))
+
+### Fixes
+
+- fix: fix `fit-to-height` and `size-to-pt` and allow text reflow ([#332](https://github.com/touying-typ/touying/pull/332))
+- fix: fix waypoint markers ([#341](https://github.com/touying-typ/touying/pull/341))
+
+
 ## v0.7.0
 
 ### Features
