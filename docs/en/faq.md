@@ -431,7 +431,10 @@ Use `#only("...")` to show content on particular subslides, or `#uncover("...")`
 
 Use `touying-reducer` to wrap CeTZ canvas so Touying can animate it:
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
 #import "@preview/cetz:0.4.2"
 
 #let cetz-canvas = touying-reducer.with(
@@ -453,7 +456,10 @@ Use `touying-reducer` to wrap CeTZ canvas so Touying can animate it:
 
 Use `touying-reducer` to wrap Fletcher diagrams:
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 #let fletcher-diagram = touying-reducer.with(
@@ -725,7 +731,10 @@ Related parameters:
 
 You can also switch these settings mid-presentation using `touying-set-config`:
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme.with(config-common(breakable: false))
 == This slide's overflow will be clipped
 
 // Enable clipping for a specific slide
@@ -865,7 +874,7 @@ Use `config-info(...)`:
     author: [Jane Doe],
     date: datetime.today(),
     institution: [My University],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
   ),
 )
 
@@ -908,7 +917,7 @@ Use `touying-get-config` at the position you want to know the config. The config
 > If you write this inside a slide that has local config, the local config will be returned instead of the global config.
 
 ```example
->>> #import "@preview/touying:0.7.1": *
+#import "@preview/touying:0.7.1": *
 #import themes.simple: *
 #show: simple-theme.with(
   config-info(author: "Beautiful Name")
@@ -982,7 +991,7 @@ The header shows the current section name.
 
 Import both packages and use `#pin`/`#pinit-highlight` inside slides as normal:
 
-```typst
+```example
 #import "@preview/touying:0.7.0": *
 #import "@preview/pinit:0.2.2": *
 #import themes.simple: *

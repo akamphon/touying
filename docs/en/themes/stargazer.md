@@ -24,7 +24,7 @@ You can initialize the theme with the following code:
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )
@@ -88,7 +88,7 @@ The Stargazer theme offers a variety of custom slide functions:
   title: auto,
   footer: auto,
   align: horizon,
-)[  
+)[
   ...
 ]
 ```
@@ -98,7 +98,7 @@ A standard slide function with a title and footer by default, where `title` defa
 ---
 
 ```typst
-#outline-slide[  
+#outline-slide[
   ...
 ]
 ```
@@ -108,7 +108,7 @@ Used to add a table of contents slide.
 ---
 
 ```typst
-#focus-slide[  
+#focus-slide[
   ...
 ]
 ```
@@ -139,7 +139,7 @@ Start a new section with the given title.
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )

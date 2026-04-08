@@ -24,6 +24,7 @@ sidebar_position: 4
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )
@@ -96,23 +97,17 @@ University 主题提供了一系列自定义 slide 函数：
 ```
 默认拥有标题和页脚的普通 slide 函数，其中 `title` 默认为当前 section title，页脚为您设置的页脚。
 
----
+### Focus Slide
 
 ```typst
 #focus-slide(background-img: ..., background-color: ...)[
   ...
 ]
 ```
+
 用于引起观众的注意力。默认背景色为 `self.colors.primary`。
 
----
-
-```typst
-#new-section-slide(short-title: auto, title)
-```
-用给定标题开启一个新的 section。
-
----
+### Matrix Slide
 
 ```typst
 #matrix-slide(columns: ..., rows: ...)[
@@ -140,6 +135,7 @@ University 主题提供了一系列自定义 slide 函数：
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )

@@ -42,10 +42,15 @@ config-info(
   author: [Authors],
   date: datetime.today(),
   institution: [Institution],
+  contact: [contact\@mail.com],
+  logo: [logo.png],
+  extra: (supervisor:[Supervisor],),
 )
 ```
 
-分别设置 slides 的标题、副标题、作者、日期和机构信息。在后续，你就可以通过 `self.info` 这样的方式访问它们。
+你甚至可以传入额外信息，以维护其他属性未涵盖的演示文稿信息。
+
+在后续，你就可以通过 `self.info` 这样的方式访问它们。
 
 这些信息一般会在主题的 `title-slide`、`header` 和 `footer` 被使用到，例如 `#show: metropolis-theme.with(aspect-ratio: "16-9", footer: self => self.info.institution)`。
 
@@ -95,14 +100,14 @@ This slide uses a red primary color, e.g. in `#alert` boxes.
 #alert[This is an alert box with red accent color.]
 
 == Changed Cover
+#show: touying-set-config.with(config-methods(
+  cover: utils.semi-transparent-cover,
+))
 Initial Content.
 
 #pause
 
 Content that appears with a semi-transparent cover effect.
-#show: touying-set-config.with(config-methods(
-  cover: utils.semi-transparent-cover,
-))
 ```
 
 ## 局部配置覆盖
@@ -152,9 +157,56 @@ config-common(frozen-counters: (theorem-counter,))
 
 ## 访问配置信息
 
-自 touying 0.7.1 起，你可以使用 `touying-get-config` 访问幻灯片的已存储配置。该配置为全局配置与该幻灯片所有覆盖设置的综合结果。
+你可以使用 `touying-get-config` 访问幻灯片的已存储配置。该配置为全局配置与该幻灯片所有覆盖设置的综合结果。
 
 请注意，它在 `context` 时机求值，并在你请求的位置插入到文档流中，因此只能以内容（content）形式使用。
+
+### 查询完整配置
+
+不传参数调用 `touying-get-config()` 可以获取完整的配置字典，然后通过普通的字典语法访问嵌套值：
+
 ```typst
-touying-get-config("info.date")
+#touying-get-config().info.author
+
+#touying-get-config().common.handout
 ```
+
+由于 `common` 下的字段是注册在了顶层，你可以直接访问：
+
+```typst
+#touying-get-config().handout  // 等同于 .common.handout
+```
+
+### 通过 key 查询
+
+传入以点号分隔的字符串 key，可以直接获取特定的子配置或值：
+
+```typst
+#touying-get-config("info.author")
+
+#touying-get-config("info")  // 返回整个 info 子字典
+```
+
+### 默认值
+
+如果 key 不存在，`touying-get-config` 默认会 panic。如果你希望提供一个回退值，可以使用 `default` 参数：
+
+```typst
+#touying-get-config("random.dict.value", default: "default value")
+```
+
+### 访问自定义配置
+
+通过 `touying-set-config` 设置的自定义 key，在 `show` 规则之后即可访问：
+
+```typst
+#show: touying-set-config.with((random: (dict: (value: 123))))
+
+#touying-get-config("random.dict.value")  // 显示 "123"
+```
+
+:::warning[警告]
+
+访问自定义配置时，必须使用字符串 key 形式（`touying-get-config("random.dict.value")`），而不是链式字典访问（`touying-get-config("random.dict").value`），因为后者会尝试在 content 元素上访问 `.value`，这会导致失败。
+
+:::

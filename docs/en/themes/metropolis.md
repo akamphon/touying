@@ -27,7 +27,7 @@ You can initialize it using the following code:
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
     logo: emoji.city,
   ),
 )
@@ -130,7 +130,7 @@ Creates a new section with the given title.
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
     logo: emoji.city,
   ),
 )

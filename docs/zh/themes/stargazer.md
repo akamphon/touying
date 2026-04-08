@@ -25,6 +25,7 @@ sidebar_position: 6
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )
@@ -136,6 +137,7 @@ Stargazer 主题提供了一系列自定义 slide 函数：
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )

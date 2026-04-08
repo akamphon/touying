@@ -28,6 +28,7 @@ sidebar_position: 3
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
   ),
 )
 
@@ -120,6 +121,7 @@ Dewdrop 主题提供了一系列自定义 slide 函数：
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
   ),
 )
 

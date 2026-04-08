@@ -79,6 +79,8 @@ Aqua 主题提供了一系列自定义 slide 函数：
   repeat: auto,
   setting: body => body,
   composer: components.side-by-side,
+  // Aqua theme
+  title: auto,
 )[
   ...
 ]

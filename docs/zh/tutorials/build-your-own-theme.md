@@ -37,6 +37,7 @@ sidebar_position: 9
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )
@@ -63,7 +64,7 @@ sidebar_position: 9
 
 并且要在 Touying 的 `themes/themes.typ` 里加上
 
-```
+```typst
 #import "bamboo.typ"
 ```
 
@@ -198,7 +199,6 @@ config-methods(alert: utils.alert-with-primary-color)
 为了让 header 和 footer 正确显示，并且与正文有足够的间隔，我们需要设置 margin，如 `config-page(margin: (top: 4em, bottom: 1.5em, x: 2em))`。
 
 而我们还需要自定义一个 `slide` 方法，其中接收 `#let slide(title: auto, ..args) = touying-slide-wrapper(self => {..})`，回调函数中 `self` 是回调函数所必须的参数，用于获取最新的 `self`；而第二个 `title` 则是用于更新 `self.store.title`，以便在 header 中显示出来；第三个 `..args` 是用于收集剩余的参数，并传到 `touying-slide(self: self, ..args)` 里，这也是让 Touying `slide` 功能正常生效所必须的。并且，我们需要在 `bamboo-theme` 函数里使用 `config-methods(slide: slide)` 注册这个方法。
-
 ```example
 // bamboo.typ
 #import "@preview/touying:0.7.0": *
@@ -240,6 +240,52 @@ config-methods(alert: utils.alert-with-primary-color)
   touying-slide(self: self, ..args)
 })
 
+#let title-slide(..args) = touying-slide-wrapper(self => {
+  let info = self.info + args.named()
+  let body = {
+    set align(center + horizon)
+    block(
+      fill: self.colors.primary,
+      width: 80%,
+      inset: (y: 1em),
+      radius: 1em,
+      text(size: 2em, fill: self.colors.neutral-lightest, weight: "bold", info.title),
+    )
+    set text(fill: self.colors.neutral-darkest)
+    if info.author != none {
+      block(info.author)
+    }
+    if info.date != none {
+      block(utils.display-info-date(self))
+    }
+    if info.contact != none {
+      block(info.contact)
+    }
+  }
+  touying-slide(self: self, body)
+})
+
+#let new-section-slide(self: none, body) = touying-slide-wrapper(self => {
+  let main-body = {
+    set align(center + horizon)
+    set text(size: 2em, fill: self.colors.primary, weight: "bold", style: "italic")
+    utils.display-current-heading(level: 1)
+  }
+  touying-slide(self: self, main-body)
+})
+
+#let focus-slide(body) = touying-slide-wrapper(self => {
+  self = utils.merge-dicts(
+    self,
+    config-page(
+      fill: self.colors.primary,
+      margin: 2em,
+    ),
+  )
+  set text(fill: self.colors.neutral-lightest, size: 2em)
+  touying-slide(self: self, align(horizon + center, body))
+})
+
 #let bamboo-theme(
   aspect-ratio: "16-9",
   footer: none,
@@ -255,10 +301,9 @@ config-methods(alert: utils.alert-with-primary-color)
     ),
     config-common(
       slide-fn: slide,
+      new-section-slide-fn: new-section-slide,
     ),
-    config-methods(
-      alert: utils.alert-with-primary-color,
-    ),
+    config-methods(alert: utils.alert-with-primary-color),
     config-colors(
       primary: rgb("#5E8B65"),
       neutral-lightest: rgb("#ffffff"),
@@ -274,18 +319,34 @@ config-methods(alert: utils.alert-with-primary-color)
   body
 }
 
-
 // main.typ
 <<< #import "@preview/touying:0.7.0": *
 <<< #import "bamboo.typ": *
 
-#show: bamboo-theme.with(aspect-ratio: "16-9")
+#show: bamboo-theme.with(
+  aspect-ratio: "16-9",
+  footer: self => self.info.institution,
+  config-info(
+    title: [Title],
+    subtitle: [Subtitle],
+    author: [Authors],
+    date: datetime.today(),
+    institution: [Institution],
+    contact: [contact\@mail.com],
+  ),
+)
+
+#title-slide()
 
 = First Section
 
 == First Slide
 
 A slide with a title and an *important* information.
+
+#focus-slide[
+  Focus on it!
+]
 ```
 
 

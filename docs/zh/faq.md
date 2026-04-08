@@ -99,7 +99,10 @@ The header now uses the custom primary color.
 
 也可以在演示文稿中途通过 `touying-set-config` 切换：
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme.with(config-common(breakable: false))
 == This slide's overflow will be clipped
 
 // Enable clipping for a specific slide
@@ -112,23 +115,49 @@ The header now uses the custom primary color.
 
 使用 `config-methods(cover: utils.semi-transparent-cover)` 配置，使被隐藏的内容以半透明形式显示：
 
-```typst
+```example
+#import "@preview/touying:0.7.0": *
+#import themes.simple: *
+
 #show: simple-theme.with(
+  aspect-ratio: "16-9",
   config-methods(cover: utils.semi-transparent-cover),
 )
+
+= Section
+
+== Slide
+
+#pause
+
+This content is shown with a semi-transparent cover.
 ```
 
 ### 如何使用 preamble 在每张幻灯片前插入内容？
 
 使用 `config-common(preamble: ...)` 在每张幻灯片前插入固定内容，`subslide-preamble` 在子幻灯片前插入：
 
-```typst
+```example
+#import "@preview/touying:0.7.0": *
+#import themes.simple: *
+
 #show: simple-theme.with(
+  aspect-ratio: "16-9",
   config-common(
-    preamble: [Page #utils.slide-counter.display()],
-    subslide-preamble: [Subslide #self.subslide],
+    preamble: text(gray)[This appears before every slide],
+    subslide-preamble: (2: [Special prelude for subslide 2]),
   ),
 )
+
+= Section
+
+== Slide
+
+Content here.
+
+#pause
+
+More content.
 ```
 
 ### 如何使用 `---` 分隔幻灯片？
@@ -542,7 +571,10 @@ This slide is in the appendix and does not increment the main counter.
 
 使用 `touying-reducer` 包裹 CeTZ canvas，使 Touying 能够为其添加动画：
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
 #import "@preview/cetz:0.4.2"
 
 #let cetz-canvas = touying-reducer.with(
@@ -564,11 +596,14 @@ This slide is in the appendix and does not increment the main counter.
 
 使用 `touying-reducer` 包裹 Fletcher 图表：
 
-```typst
-#import "@preview/fletcher:0.5.8": diagram, node, edge
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
 
 #let fletcher-diagram = touying-reducer.with(
-  reduce: diagram,
+  reduce: fletcher.diagram,
   cover: fletcher.hide,
 )
 
@@ -889,7 +924,7 @@ Content here.
 在需要获取配置的位置使用 `touying-get-config`。由于配置只能在 `context` 时机访问，因此基于此进行计算可能会导致问题。
 > 如果在含有局部配置的幻灯片内调用此函数，返回的将是局部配置，而非全局配置。
 ```example
->>> #import "@preview/touying:0.7.1": *
+#import "@preview/touying:0.7.1": *
 #import themes.simple: *
 #show: simple-theme.with(
   config-info(author: "Beautiful Name")
@@ -961,7 +996,7 @@ The header shows the current section name.
 
 正常导入两个包并在幻灯片中使用 `#pin`/`#pinit-highlight`：
 
-```typst
+```example
 #import "@preview/touying:0.7.0": *
 #import "@preview/pinit:0.2.2": *
 #import themes.simple: *

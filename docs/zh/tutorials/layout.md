@@ -86,12 +86,14 @@ sidebar_position: 4
 例如，上面的例子就可以改成
 
 ```typst
-config-page(
-  margin: (x: 4em, y: 2em),
-  header: align(top)[Header],
-  footer: align(bottom)[Footer],
-  header-ascent: 0em,
-  footer-descent: 0em,
+#show: default-theme.with(
+  config-page(
+    margin: (x: 4em, y: 2em),
+    header: align(top)[Header],
+    footer: align(bottom)[Footer],
+    header-ascent: 0em,
+    footer-descent: 0em,
+  ),
 )
 ```
 
@@ -142,7 +144,7 @@ config-page(footer: [Custom Footer])
 
 ## 使用 `lazy-v` 对齐多栏高度
 
-使用多栏布局（通过 `side-by-side` 或手动 `grid`）时，内容量不同的各栏高度会不一致。如果你希望在每栏底部放置一些"页脚"内容（如标签或说明文字），或者只是想让它们与最高栏对齐，可以配合使用 `lazy-v` 和 `lazy-layout`。
+使用多栏布局（通过 `side-by-side` 或手动 `grid`）时，内容量不同的各栏高度会不一致。如果你希望在每栏底部放置一些"页脚"内容（如标签或说明文字），并让它们在各栏之间对齐，或者只是想让所有栏与最高栏的高度一致，可以配合使用 `lazy-v` 和 `lazy-layout`。
 
 ### 工作原理
 
@@ -246,7 +248,10 @@ config-page(footer: [Custom Footer])
 
 你也可以在演示文稿中途通过 `touying-set-config` 动态切换这些配置：
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme.with(config-common(breakable: false))
 == This slide's overflow will be clipped
 
 // Enable clipping for a specific slide

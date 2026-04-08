@@ -36,7 +36,7 @@ Then you can import and use the theme by:
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
     logo: emoji.school,
   ),
 )
@@ -425,7 +425,7 @@ For the `new-section-slide` method, it's the same, but the only thing to note is
     author: [Authors],
     date: datetime.today(),
     institution: [Institution],
-    contact: [contact@mail.com],
+    contact: [contact\@mail.com],
   ),
 )
 

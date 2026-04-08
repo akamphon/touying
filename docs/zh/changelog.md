@@ -71,6 +71,28 @@ A major bugfix release, fixing many long-standing bugs and introducing many prac
 - docs: restructure docs + add docs-preview CI for PRs ([#296](https://github.com/touying-typ/touying/pull/296))
 - docs: comprehensive docstring improvements across all source files ([#294](https://github.com/touying-typ/touying/pull/294))
 
+### Theme Migration Guide
+
+**For theme developers upgrading to v0.6.3:**
+
+1. **Move `config` to the last position in `utils.merge-dicts`** to allow user overrides:
+   ```typst
+   // Before
+   self = utils.merge-dicts(self, config, config-page(...))
+   
+   // After
+   self = utils.merge-dicts(self, config-page(...), config)
+   ```
+
+2. **Replace `paper` with `utils.page-args-from-aspect-ratio`** to support arbitrary aspect ratios:
+   ```typst
+   // Before
+   config-page(paper: "presentation-" + aspect-ratio, ...)
+   
+   // After
+   config-page(..utils.page-args-from-aspect-ratio(aspect-ratio), ...)
+   ```
+
 
 ## v0.6.2
 
@@ -95,29 +117,6 @@ A major bugfix release, fixing many long-standing bugs and introducing many prac
 
 - docs: update README, bump versions of deps, and fix comment docs
 - ci: add more tests, bump versions of `tytanic`, and update typstyle workflow (#221, #261)
-
-### Theme Migration Guide
-
-**For theme developers upgrading to v0.6.3:**
-
-1. **Move `config` to the last position in `utils.merge-dicts`** to allow user overrides:
-   ```typst
-   // Before
-   self = utils.merge-dicts(self, config, config-page(...))
-   
-   // After
-   self = utils.merge-dicts(self, config-page(...), config)
-   ```
-
-2. **Replace `paper` with `utils.page-args-from-aspect-ratio`** to support arbitrary aspect ratios:
-   ```typst
-   // Before
-   config-page(paper: "presentation-" + aspect-ratio, ...)
-   
-   // After
-   config-page(..utils.page-args-from-aspect-ratio(aspect-ratio), ...)
-   ```
-
 
 ## v0.6.1
 

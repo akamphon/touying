@@ -143,7 +143,7 @@ If you need to change the way columns are divided, you can modify the `composer`
 
 ## Equalizing Column Heights with `lazy-v`
 
-When using multi-column layouts (via `side-by-side` or a manual `grid`), columns with different amounts of content will have different heights. If you want to push some "footer" content (e.g. a label or caption) to the bottom of each column and have it align across all columns, you can use `lazy-v` together with `lazy-layout`.
+When using multi-column layouts (via `side-by-side` or a manual `grid`), columns with different amounts of content will have different heights. If you want to push some "footer" content (e.g. a label or caption) to the bottom of each column and have it align across all columns, or simply want all columns to match the tallest one's height, you can use `lazy-v` together with `lazy-layout`.
 
 ### How It Works
 
@@ -172,7 +172,6 @@ When using multi-column layouts (via `side-by-side` or a manual `grid`), columns
   ]
 ]
 ```
-
 Both columns will have the same height (matching the taller one), and "Bottom left." / "Bottom right." will be aligned at the bottom. The overall layout height equals the tallest column — it does **not** expand to fill the entire page.
 
 :::note[Note]
@@ -247,7 +246,10 @@ Related parameters:
 
 You can also dynamically switch these settings mid-presentation using `touying-set-config`:
 
-```typst
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme.with(config-common(breakable: false))
 == This slide's overflow will be clipped
 
 // Enable clipping for a specific slide
