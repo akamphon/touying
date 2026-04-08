@@ -141,6 +141,76 @@ If you need to change the way columns are divided, you can modify the `composer`
 ]
 ```
 
+## Equalizing Column Heights with `lazy-v`
+
+When using multi-column layouts (via `side-by-side` or a manual `grid`), columns with different amounts of content will have different heights. If you want to push some "footer" content (e.g. a label or caption) to the bottom of each column and have it align across all columns, you can use `lazy-v` together with `lazy-layout`.
+
+### How It Works
+
+- **`components.lazy-v(1fr)`** — Place this between the main content and the footer content inside a block. It acts as a deferred vertical spacer that is invisible during height measurement.
+- **`lazy-layout`** — Wraps the multi-column layout. It first measures the natural height of all columns (ignoring `lazy-v` markers), then re-renders at that fixed height with the markers activated. This causes each column to stretch to match the tallest one, without the overall container expanding to fill the entire page.
+
+### Using `side-by-side` (Recommended)
+
+`side-by-side` enables `lazy-layout` by default, so you just need to add `lazy-v(1fr)` inside each block:
+
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
+#components.side-by-side[
+  #block(fill: luma(220), inset: .5em, radius: .2em, width: 100%)[
+    #lorem(10)
+    #components.lazy-v(1fr)
+    Bottom left.
+  ]
+][
+  #block(fill: luma(220), inset: .5em, radius: .2em, width: 100%)[
+    #lorem(20)
+    #components.lazy-v(1fr)
+    Bottom right.
+  ]
+]
+```
+
+Both columns will have the same height (matching the taller one), and "Bottom left." / "Bottom right." will be aligned at the bottom. The overall layout height equals the tallest column — it does **not** expand to fill the entire page.
+
+:::note[Note]
+
+This is different from using `v(1fr)` inside `#slide[][]`. The `slide` composer occupies the full page height, so `v(1fr)` works directly there. `lazy-v` is designed for standalone `side-by-side` or `lazy-layout` calls where you want height equalization without full-page expansion.
+
+:::
+
+### Using a Manual Grid
+
+You can also wrap a `grid` with `components.lazy-layout` directly:
+
+```example
+>>> #import "@preview/touying:0.7.0": *
+>>> #import themes.simple: *
+>>> #show: simple-theme
+#components.lazy-layout(grid(
+  columns: (1fr, 1fr),
+  gutter: 1em,
+  block(fill: luma(220), inset: .5em, radius: .2em, width: 100%)[
+    #lorem(10)
+    #components.lazy-v(1fr)
+    Bottom left.
+  ],
+  block(fill: luma(220), inset: .5em, radius: .2em, width: 100%)[
+    #lorem(20)
+    #components.lazy-v(1fr)
+    Bottom right.
+  ],
+))
+```
+
+:::tip[Tip]
+
+If you don't need the height-equalizing behavior, pass `lazy-layout: false` to `side-by-side` to opt out.
+
+:::
+
 ## Preventing Content Overflow
 
 By default, when slide content exceeds the page height, Touying automatically overflows the excess content to the next page. This is reasonable in most cases, but in scenarios that require strict control over page mapping — such as agentic workflows where an agent needs to reason about slide boundaries — you may want to disable this behavior.
