@@ -177,6 +177,63 @@
 })
 
 
+/// Outline slide for the presentation.
+///
+/// Example:
+///
+/// ```typst
+/// #show: metropolis-theme.with(
+///   config-info(
+///     title: [Title],
+///     logo: emoji.city,
+///   ),
+/// )
+///
+/// #outline-slide(indent: (1em,), depth: 1, title: [Contents])
+/// ```
+///
+/// - config (dictionary): The configuration of the slide.
+/// - level (int | auto): The level of the outline. Default is `auto`, which uses the slide-level configured in the `config-common`.
+/// - title (string): The title of the slide. Default is "Outline".
+/// - spacing (length): The spacing between the outline entries. Default is 2em.
+/// - args (any): The arguments to pass to the custom-progressive-outline, see https://touying-typ.github.io/docs/reference/components/custom-progressive-outline. Some values like numbering have defaults to mimic the style of the metropolis theme.
+#let outline-slide(
+  config: (:),
+  level: auto,
+  title: [Outline],
+  spacing: 2em,
+  ..args,
+) = slide(title: title, config: config, self => {
+  let named-args = args.named()
+  let indent = if not "indent" in named-args.keys() { (1em,) } else {
+    named-args.remove("indent")
+  }
+  if type(indent) != array {
+    indent = (indent,)
+  }
+  let vspace = if not "vspace" in named-args.keys() {
+    (spacing, spacing / 3, spacing / 3, spacing / 3)
+  } else { named-args.remove("vspace") }
+  let numbered = if not "numbered" in named-args.keys() { (true,) } else {
+    named-args.remove("numbered")
+  }
+  let numbering = if not "numbering" in named-args.keys() { ("1.",) } else {
+    named-args.remove("numbering")
+  }
+  components.custom-progressive-outline(
+    title: none,
+    depth: if level != auto { level } else { self.slide-level },
+    level: level,
+    indent: indent,
+    vspace: vspace,
+    numbered: numbered,
+    numbering: numbering,
+    ..args.pos(),
+    ..named-args,
+  )
+})
+
+
 /// New section slide for the presentation. You can update it by updating the `new-section-slide-fn` argument for `config-common` function.
 ///
 /// Example: `config-common(new-section-slide-fn: new-section-slide.with(numbered: false))`
