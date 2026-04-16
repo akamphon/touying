@@ -288,6 +288,11 @@
   // leading preamble to collect content from before the slide break
   let leading-preamble = ()
 
+  // Buffer for the last slide-wrapper's callable and self, so that
+  // immediately following speaker-notes can be re-attached to it.
+  // Each element is a (callable, slide-self) pair. Empty means no pending wrapper.
+  let last-wrapper-info = ()
+
   // Is we have a horizontal line
   let horizontal-line = false
   // Iterate over the children
@@ -327,6 +332,16 @@
       }
       horizontal-line = false
       absorb-leading-preamble = false
+    }
+    // Clear last-wrapper-info when we encounter anything other than a
+    // speaker-note or whitespace, so that only speaker-notes *immediately*
+    // after a slide-wrapper get attached.
+    if (
+      last-wrapper-info.len() > 0
+        and not utils.is-kind(child, "touying-speaker-note")
+        and child not in ([], [ ], parbreak(), linebreak())
+    ) {
+      while last-wrapper-info.len() > 0 { let _ = last-wrapper-info.pop() }
     }
     // Main logic
     if utils.is-kind(child, "touying-slide-wrapper") {
@@ -385,7 +400,45 @@
         ))
       }
       if slide-content != none { output-slides.push(slide-content) }
+      // Clear and set last-wrapper-info for potential speaker-note attachment
+      while last-wrapper-info.len() > 0 { let _ = last-wrapper-info.pop() }
+      last-wrapper-info.push((child.value.fn, slide-self))
       absorb-leading-preamble = false
+    } else if (
+      utils.is-kind(child, "touying-speaker-note")
+        and last-wrapper-info.len() > 0
+        and utils.trim(slide-parts) == ()
+    ) {
+      // A speaker-note immediately after a slide-wrapper: re-generate the
+      // previous slide with the note injected into self so it gets processed
+      // inside the slide's subslide-preamble (within the page context).
+      let (original-fn, wrapper-self) = last-wrapper-info.last()
+      let existing-notes = wrapper-self.at(
+        "attached-speaker-notes",
+        default: (),
+      )
+      existing-notes.push(child.value)
+      let new-self = wrapper-self + (attached-speaker-notes: existing-notes)
+      // Replace the last output slide with the new one
+      let _ = output-slides.pop()
+      (
+        slide-content,
+        recaller-map,
+        current-headings,
+        slide-parts,
+        new-start,
+        is-first-slide,
+      ) = call-slide-fn-and-reset(
+        new-self,
+        already-slide-wrapper: true,
+        original-fn,
+        none,
+        recaller-map,
+      )
+      if slide-content != none { output-slides.push(slide-content) }
+      // Update last-wrapper-info with the new self
+      while last-wrapper-info.len() > 0 { let _ = last-wrapper-info.pop() }
+      last-wrapper-info.push((original-fn, new-self))
     } else if utils.is-kind(child, "touying-slide-recaller") {
       slide-parts = utils.trim(slide-parts)
       if slide-parts != () or current-headings != () {
@@ -527,6 +580,12 @@
         not child.has("label")
           or str(child.label) not in ("touying:hidden", "touying:skip")
       ) {
+        // Helper to set last-wrapper-info after a heading-triggered slide.
+        // We extract the wrapper fn by calling the slide function with none
+        // body, which returns a touying-slide-wrapper metadata.
+        let heading-slide-self = (
+          self + (headings: current-headings, is-first-slide: is-first-slide)
+        )
         if (
           child.depth == 1
             and new-section-slide-fn != none
@@ -540,12 +599,20 @@
             new-start,
             is-first-slide,
           ) = call-slide-fn-and-reset(
-            self + (headings: current-headings, is-first-slide: is-first-slide),
+            heading-slide-self,
             new-section-slide-fn,
             none,
             recaller-map,
           )
-          if slide-content != none { output-slides.push(slide-content) }
+          if slide-content != none {
+            output-slides.push(slide-content)
+            // Track for speaker-note attachment
+            let wrapper = new-section-slide-fn(none)
+            while last-wrapper-info.len() > 0 {
+              let _ = last-wrapper-info.pop()
+            }
+            last-wrapper-info.push((wrapper.value.fn, heading-slide-self))
+          }
         } else if (
           child.depth == 2
             and new-subsection-slide-fn != none
@@ -559,12 +626,19 @@
             new-start,
             is-first-slide,
           ) = call-slide-fn-and-reset(
-            self + (headings: current-headings, is-first-slide: is-first-slide),
+            heading-slide-self,
             new-subsection-slide-fn,
             none,
             recaller-map,
           )
-          if slide-content != none { output-slides.push(slide-content) }
+          if slide-content != none {
+            output-slides.push(slide-content)
+            let wrapper = new-subsection-slide-fn(none)
+            while last-wrapper-info.len() > 0 {
+              let _ = last-wrapper-info.pop()
+            }
+            last-wrapper-info.push((wrapper.value.fn, heading-slide-self))
+          }
         } else if (
           child.depth == 3
             and new-subsubsection-slide-fn != none
@@ -578,12 +652,19 @@
             new-start,
             is-first-slide,
           ) = call-slide-fn-and-reset(
-            self + (headings: current-headings, is-first-slide: is-first-slide),
+            heading-slide-self,
             new-subsubsection-slide-fn,
             none,
             recaller-map,
           )
-          if slide-content != none { output-slides.push(slide-content) }
+          if slide-content != none {
+            output-slides.push(slide-content)
+            let wrapper = new-subsubsection-slide-fn(none)
+            while last-wrapper-info.len() > 0 {
+              let _ = last-wrapper-info.pop()
+            }
+            last-wrapper-info.push((wrapper.value.fn, heading-slide-self))
+          }
         } else if (
           child.depth == 4
             and new-subsubsubsection-slide-fn != none
@@ -597,12 +678,19 @@
             new-start,
             is-first-slide,
           ) = call-slide-fn-and-reset(
-            self + (headings: current-headings, is-first-slide: is-first-slide),
+            heading-slide-self,
             new-subsubsubsection-slide-fn,
             none,
             recaller-map,
           )
-          if slide-content != none { output-slides.push(slide-content) }
+          if slide-content != none {
+            output-slides.push(slide-content)
+            let wrapper = new-subsubsubsection-slide-fn(none)
+            while last-wrapper-info.len() > 0 {
+              let _ = last-wrapper-info.pop()
+            }
+            last-wrapper-info.push((wrapper.value.fn, heading-slide-self))
+          }
         }
       }
     } else if (
@@ -5429,6 +5517,17 @@
       "default-subslide-preamble",
       default: none,
     ))
+    // Process speaker-notes that were attached from outside the slide
+    // (e.g. #speaker-note[] immediately after #slide[]).
+    for note in self.at("attached-speaker-notes", default: ()) {
+      utils.speaker-note(
+        self: self,
+        mode: note.mode,
+        setting: note.setting,
+        subslide: if note.subslide == auto { none } else { note.subslide },
+        note.note,
+      )
+    }
   }
   // update states for every page
   let page-preamble(self) = {
