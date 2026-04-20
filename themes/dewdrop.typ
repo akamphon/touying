@@ -3,8 +3,6 @@
 
 #import "../src/exports.typ": *
 
-#let _typst-builtin-repeat = repeat
-
 #let dewdrop-header(self) = {
   if self.store.navigation == "sidebar" {
     place(
@@ -19,12 +17,14 @@
           self: self,
           level: auto,
           alpha: self.store.alpha,
-          text-fill: (self.colors.primary, self.colors.neutral-darkest),
-          text-size: (1em, .9em),
+          text-style: (
+            (fill: self.colors.primary, size: 1em),
+            (fill: self.colors.neutral-darkest, size: .9em),
+          ),
           vspace: (-.2em,),
           indent: (0em, self.store.sidebar.at("indent", default: .5em)),
           fill: (
-            self.store.sidebar.at("fill", default: _typst-builtin-repeat[.]),
+            self.store.sidebar.at("fill", default: std.repeat[.]),
           ),
           filled: (self.store.sidebar.at("filled", default: false),),
           paged: (self.store.sidebar.at("paged", default: false),),
@@ -47,6 +47,7 @@
       ),
       linebreaks: self.store.mini-slides.at("linebreaks", default: true),
       short-heading: self.store.mini-slides.at("short-heading", default: true),
+      inline: self.store.mini-slides.at("inline", default: false),
     )
   }
 }
@@ -81,9 +82,9 @@
 ///
 ///   For example, `#slide(composer: (1fr, 2fr, 1fr))[A][B][C]` to split the slide into three parts. The first and the last parts will take 1/4 of the slide, and the second part will take 1/2 of the slide.
 ///
-///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `components.side-by-side` function.
+///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `cols` function.
 ///
-///   The `components.side-by-side` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
+///   The `cols` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
 ///
 ///   For example, `#slide(composer: 2)[A][B][#grid.cell(colspan: 2)[Footer]]` will make the `Footer` cell take 2 columns.
 ///
@@ -141,9 +142,9 @@
 ) = touying-slide-wrapper(self => {
   self = utils.merge-dicts(
     self,
-    config,
     config-common(freeze-slide-counter: true),
     config-page(margin: 0em),
+    config,
   )
   let info = self.info + args.named()
   let body = {
@@ -180,6 +181,9 @@
         set text(size: .8em)
         if info.institution != none {
           block(spacing: 1em, info.institution)
+        }
+        if info.contact != none {
+          block(spacing: 1em, info.contact)
         }
         if extra != none {
           block(spacing: 1em, extra)
@@ -250,24 +254,27 @@
   touying-slide(
     self: self,
     config: config,
-    components.adaptive-columns(
-      start: text(
-        1.2em,
-        fill: self.colors.primary,
-        weight: "bold",
-        utils.call-or-display(self, title),
-      ),
-      text(
-        fill: self.colors.neutral-darkest,
-        components.progressive-outline(
-          alpha: self.store.alpha,
-          title: none,
-          indent: 1em,
-          depth: self.slide-level,
-          ..args,
+    {
+      components.adaptive-columns(
+        start: text(
+          1.2em,
+          fill: self.colors.primary,
+          weight: "bold",
+          utils.call-or-display(self, title),
         ),
-      ),
-    ),
+        text(
+          fill: self.colors.neutral-darkest,
+          components.progressive-outline(
+            alpha: self.store.alpha,
+            title: none,
+            indent: 1em,
+            depth: self.slide-level,
+            ..args,
+          ),
+        ),
+      )
+      body
+    },
   )
 })
 
@@ -293,7 +300,7 @@
 /// Example:
 ///
 /// ```typst
-/// #show: dewdrop-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))`
+/// #show: dewdrop-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))
 /// ```
 ///
 /// The default colors:
@@ -326,6 +333,7 @@
 ///   - display-subsection (boolean): Whether the slides of subsections are displayed in the mini-slides.
 ///   - linebreaks (boolean): Whether line breaks are in between links for sections and subsections in the mini-slides.
 ///   - short-heading (boolean): Whether the mini-slides are short. Default is `true`.
+///   - inline (boolean): Whether the mini-slides are displayed right after the section or subsection link, or on a new line. Default is `false`.
 ///
 /// - footer (content, function): The footer of the slides. Default is `none`.
 ///
@@ -399,7 +407,7 @@
 
   show: touying-slides.with(
     config-page(
-      paper: "presentation-" + aspect-ratio,
+      ..utils.page-args-from-aspect-ratio(aspect-ratio),
       header-ascent: 0em,
       footer-descent: 0em,
       margin: if navigation == "sidebar" {

@@ -64,9 +64,9 @@
 ///
 ///   For example, `#slide(composer: (1fr, 2fr, 1fr))[A][B][C]` to split the slide into three parts. The first and the last parts will take 1/4 of the slide, and the second part will take 1/2 of the slide.
 ///
-///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `components.side-by-side` function.
+///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `cols` function.
 ///
-///   The `components.side-by-side` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
+///   The `cols` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
 ///
 ///   For example, `#slide(composer: 2)[A][B][#grid.cell(colspan: 2)[Footer]]` will make the `Footer` cell take 2 columns.
 ///
@@ -124,75 +124,95 @@
 ///   ),
 /// )
 ///
-/// #title-slide(subtitle: [Subtitle])
+/// #title-slide(subtitle: [Subtitle], extra: [Extra information])
 /// ```
 ///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For more several configurations, you can use `utils.merge-dicts` to merge them.
-#let title-slide(config: (:), ..args) = touying-slide-wrapper(self => {
-  self = utils.merge-dicts(
-    self,
-    config,
-  )
-  self.store.title = none
-  let info = self.info + args.named()
-  info.authors = {
-    let authors = if "authors" in info {
-      info.authors
-    } else {
-      info.author
+///
+/// - extra (content, none): The extra information you want to display on the title slide.
+#let title-slide(config: (:), extra: none, ..args) = touying-slide-wrapper(
+  self => {
+    self = utils.merge-dicts(
+      self,
+      config,
+    )
+    self.store.title = none
+    let info = self.info + args.named()
+    info.authors = {
+      let authors = if "authors" in info {
+        info.authors
+      } else {
+        info.author
+      }
+      if type(authors) == array {
+        authors
+      } else {
+        (authors,)
+      }
     }
-    if type(authors) == array {
-      authors
-    } else {
-      (authors,)
-    }
-  }
-  let body = {
-    show: std.align.with(center + horizon)
-    block(
-      fill: self.colors.primary,
-      inset: 1.5em,
-      radius: 0.5em,
-      breakable: false,
-      {
-        text(
-          size: 1.2em,
-          fill: self.colors.neutral-lightest,
-          weight: "bold",
-          info.title,
-        )
-        if info.subtitle != none {
-          parbreak()
+    let body = {
+      show: std.align.with(center + horizon)
+      block(
+        fill: self.colors.primary,
+        inset: 1.5em,
+        radius: 0.5em,
+        breakable: false,
+        {
           text(
-            size: 1.0em,
+            size: 1.2em,
             fill: self.colors.neutral-lightest,
             weight: "bold",
-            info.subtitle,
+            info.title,
           )
-        }
-      },
-    )
-    // authors
-    grid(
-      columns: (1fr,) * calc.min(info.authors.len(), 3),
-      column-gutter: 1em,
-      row-gutter: 1em,
-      ..info.authors.map(author => text(fill: black, author)),
-    )
-    v(0.5em)
-    // institution
-    if info.institution != none {
-      parbreak()
-      text(size: 0.7em, info.institution)
+          if info.subtitle != none {
+            parbreak()
+            text(
+              size: 1.0em,
+              fill: self.colors.neutral-lightest,
+              weight: "bold",
+              info.subtitle,
+            )
+          }
+        },
+      )
+      // authors
+      stack(
+        dir: ttb,
+        spacing: 1em,
+        ..info
+          .authors
+          .chunks(3)
+          .map(author-chunk => {
+            grid(
+              columns: (1fr,) * author-chunk.len(),
+              column-gutter: 1em,
+              ..author-chunk.map(author => text(fill: black, author))
+            )
+          }),
+      )
+      v(0.5em)
+      // institution
+      if info.institution != none {
+        parbreak()
+        text(size: 0.7em, info.institution)
+      }
+      if info.contact != none {
+        parbreak()
+        text(size: 0.7em, info.contact)
+      }
+      // date
+      if info.date != none {
+        parbreak()
+        text(size: 1.0em, utils.display-info-date(self))
+      }
+      if extra != none {
+        parbreak()
+        text(size: 0.8em, extra)
+      }
     }
-    // date
-    if info.date != none {
-      parbreak()
-      text(size: 1.0em, utils.display-info-date(self))
-    }
-  }
-  touying-slide(self: self, body)
-})
+    touying-slide(self: self, body)
+  },
+)
 
 
 
@@ -328,13 +348,13 @@
 /// Example:
 ///
 /// ```typst
-/// #show: stargazer-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))`
+/// #show: stargazer-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))
 /// ```
 ///
 /// Consider using:
 ///
 /// ```typst
-/// #set text(font: "Fira Sans", weight: "light", size: 20pt)`
+/// #set text(font: "Fira Sans", weight: "light", size: 20pt)
 /// #show math.equation: set text(font: "Fira Math")
 /// #set strong(delta: 100)
 /// #set par(justify: true)
@@ -356,6 +376,8 @@
 /// - aspect-ratio (string): is the aspect ratio of the slides. The default is `16-9`.
 ///
 /// - align (alignment): is the alignment of the content. The default is `horizon`.
+///
+/// - alpha (float): the alpha of the covered headings in outlines. The default is `20%`.
 ///
 /// - title (content, function): is the title in the header of the slide. The default is `self => utils.display-current-heading(depth: self.slide-level)`.
 ///
@@ -426,12 +448,12 @@
 
   show: touying-slides.with(
     config-page(
-      paper: "presentation-" + aspect-ratio,
+      ..utils.page-args-from-aspect-ratio(aspect-ratio),
       header: header,
       footer: footer,
       header-ascent: 0em,
       footer-descent: 0em,
-      margin: (top: 3.5em, bottom: 2.5em, x: 2.5em),
+      margin: (top: 4em, bottom: 2em, x: 2.5em),
     ),
     config-common(
       slide-fn: slide,

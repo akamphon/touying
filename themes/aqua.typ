@@ -14,9 +14,9 @@
 ///
 ///   For example, `#slide(composer: (1fr, 2fr, 1fr))[A][B][C]` to split the slide into three parts. The first and the last parts will take 1/4 of the slide, and the second part will take 1/2 of the slide.
 ///
-///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `components.side-by-side` function.
+///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `cols` function.
 ///
-///   The `components.side-by-side` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
+///   The `cols` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
 ///
 ///   For example, `#slide(composer: 2)[A][B][#grid.cell(colspan: 2)[Footer]]` will make the `Footer` cell take 2 columns.
 ///
@@ -91,44 +91,61 @@
 /// ```
 ///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For more configurations, you can use `utils.merge-dicts` to merge them.
-#let title-slide(config: (:), ..args) = touying-slide-wrapper(self => {
-  self = utils.merge-dicts(
-    self,
-    config,
-    config-common(freeze-slide-counter: true),
-    config-page(
-      background: utils.call-or-display(self, self.store.background),
-      margin: (x: 0em, top: 30%, bottom: 0%),
-    ),
-  )
-  let info = self.info + args.named()
-  let body = {
-    set align(center)
-    stack(
-      spacing: 3em,
-      if info.title != none {
-        text(size: 48pt, weight: "bold", fill: self.colors.primary, info.title)
-      },
-      if info.author != none {
-        text(
-          fill: self.colors.primary-light,
-          size: 28pt,
-          weight: "regular",
-          info.author,
-        )
-      },
-      if info.date != none {
-        text(
-          fill: self.colors.primary-light,
-          size: 20pt,
-          weight: "regular",
-          utils.display-info-date(self),
-        )
-      },
+///
+/// - extra (content, none): The extra information you want to display on the title slide.
+#let title-slide(config: (:), extra: none, ..args) = touying-slide-wrapper(
+  self => {
+    self = utils.merge-dicts(
+      self,
+      config-common(freeze-slide-counter: true),
+      config-page(
+        background: utils.call-or-display(self, self.store.background),
+        margin: (x: 0em, top: 30%, bottom: 0%),
+      ),
+      config,
     )
-  }
-  touying-slide(self: self, body)
-})
+    let info = self.info + args.named()
+    let body = {
+      set align(center)
+      stack(
+        spacing: 3em,
+        if info.title != none {
+          text(
+            size: 48pt,
+            weight: "bold",
+            fill: self.colors.primary,
+            info.title,
+          )
+        },
+        if info.author != none {
+          text(
+            fill: self.colors.primary-light,
+            size: 28pt,
+            weight: "regular",
+            info.author,
+          )
+        },
+        if info.date != none {
+          text(
+            fill: self.colors.primary-light,
+            size: 20pt,
+            weight: "regular",
+            utils.display-info-date(self),
+          )
+        },
+        if extra != none {
+          text(
+            fill: self.colors.primary-light,
+            size: 20pt,
+            weight: "regular",
+            extra,
+          )
+        },
+      )
+    }
+    touying-slide(self: self, body)
+  },
+)
 
 
 /// Outline slide for the presentation.
@@ -259,13 +276,13 @@
 /// Example:
 ///
 /// ```typst
-/// #show: aqua-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))`
+/// #show: aqua-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))
 /// ```
 ///
 /// Consider using:
 ///
 /// ```typst
-/// #set text(font: "Fira Sans", weight: "light", size: 20pt)`
+/// #set text(font: "Fira Sans", weight: "light", size: 20pt)
 /// #show math.equation: set text(font: "Fira Math")
 /// #set strong(delta: 100)
 /// #set par(justify: true)
@@ -300,7 +317,7 @@
 
   show: touying-slides.with(
     config-page(
-      paper: "presentation-" + aspect-ratio,
+      ..utils.page-args-from-aspect-ratio(aspect-ratio),
       margin: (x: 2em, top: 3.5em, bottom: 2em),
     ),
     config-common(
@@ -327,9 +344,7 @@
       header: header,
       footer: footer,
       background: self => {
-        let page-width = if self.page.paper == "presentation-16-9" {
-          841.89pt
-        } else { 793.7pt }
+        let (page-width, _) = utils.get-page-dimensions(self)
         let r = if (
           self.at("show-notes-on-second-screen", default: none) == none
         ) { 1.0 } else { 0.5 }

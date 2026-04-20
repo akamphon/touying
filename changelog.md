@@ -1,5 +1,137 @@
 # Changelog
 
+## v0.7.1
+
+### Features
+
+- feat(agents): `breakable` and `clip` options to avoid slide overflow ([#336](https://github.com/touying-typ/touying/pull/336))
+- feat(components): add `lazy-v` (`lazy-h`) and `lazy-layout` for equalizing multi-column (-row) block heights (widths) ([#339](https://github.com/touying-typ/touying/pull/339))
+- feat: additional `contact` and `extra` field in `config-info` ([#342](https://github.com/touying-typ/touying/pull/342))
+- feat: `touying-get-config` function ([#333](https://github.com/touying-typ/touying/pull/333))
+
+### Fixes
+
+- fix: fix `fit-to-height` and `size-to-pt` and allow text reflow ([#332](https://github.com/touying-typ/touying/pull/332))
+- fix: fix waypoint markers ([#341](https://github.com/touying-typ/touying/pull/341))
+
+
+## v0.7.0
+
+### Features
+
+- **major feature:** a named waypoint feature ([#298](https://github.com/touying-typ/touying/pull/298))
+- feat(waypoint): start param and Waypoints in handout-subslides ([#304](https://github.com/touying-typ/touying/pull/304))
+- feat: auto, "h"-here string and inverse function for string subslide-numbers and waypoints ([#301](https://github.com/touying-typ/touying/pull/301))
+- feat: implicitly allow fn-wrapper based animation functions via reducer ([#300](https://github.com/touying-typ/touying/pull/300))
+
+### Fixes
+
+- fix: fix cover-with-rect breaking long lines of text when partially hidden and fallback functions for color/alpha cover ([#328](https://github.com/touying-typ/touying/pull/328))
+- fix: using explicit numbering in display-current-heading when style=auto ([#329](https://github.com/touying-typ/touying/pull/329))
+- fix: fix ghost slides with show rules. Fix proper consistent handling of show rules and defer keyword ([#317](https://github.com/touying-typ/touying/pull/317))
+- fix: alert not delayed ([#316](https://github.com/touying-typ/touying/pull/316))
+- fix: remove redundant nested text call ([#324](https://github.com/touying-typ/touying/pull/324))
+- fix: function alternatives-match takes into account parameter stretch ([#320](https://github.com/touying-typ/touying/pull/320))
+- fix: correctly handle page margin merge/precedence ([#322](https://github.com/touying-typ/touying/pull/322))
+- fix: fix cover spacing issues surrounding lists ([#303](https://github.com/touying-typ/touying/pull/303))
+- fix: correctly parses negative subslide indices (ints, arrays) for handout-subslides ([#307](https://github.com/touying-typ/touying/pull/307))
+- fix: slide function does not update via scoped import ([#310](https://github.com/touying-typ/touying/pull/310))
+
+Thanks for the contributions from [@zral0kh](https://github.com/zral0kh), [@Andrew15-5](https://github.com/Andrew15-5), [@navdeeprana](https://github.com/navdeeprana), and [@Cemoixerestre](https://github.com/Cemoixerestre).
+
+## v0.6.3
+
+A major bugfix release, fixing many long-standing bugs and introducing many practical features.
+
+### Features
+
+- **feat: add `#jump(n, relative: bool)` as unified animation control; redefine `#pause`/`#meanwhile` as sugar**
+- feat: add `#handout-only` for inline content and `<touying:handout>` label for handout-exclusive slides ([#286](https://github.com/touying-typ/touying/pull/286))
+- feat: add `handout-subslides` to control which subslides appear in handout mode ([#288](https://github.com/touying-typ/touying/pull/288))
+- feat: add `#touying-raw` for animated code block reveals ([#283](https://github.com/touying-typ/touying/pull/283))
+- feat: add full-screen speaker notes mode with slide thumbnail (`show-only-notes`) ([#281](https://github.com/touying-typ/touying/pull/281))
+- feat: support arbitrary aspect ratios (e.g. 16-10) across all themes and speaker-note second screen ([#280](https://github.com/touying-typ/touying/pull/280))
+- feat: add `#item-by-item` animation for list, enum, and terms ([#278](https://github.com/touying-typ/touying/pull/278))
+- feat(recall): add subslide parameter to `#touying-recall` ([#285](https://github.com/touying-typ/touying/pull/285))
+- feat: add `default-composer` to config-common for global slide layout configuration ([#284](https://github.com/touying-typ/touying/pull/284))
+- feat: add `cover-fn` parameter to `uncover` for external package integration (e.g. Fletcher) ([#267](https://github.com/touying-typ/touying/pull/267))
+- feat: minislides can be displayed inline ([#228](https://github.com/touying-typ/touying/pull/228))
+- theme: improve appearance of long author lists in university and stargazer theme ([#242](https://github.com/touying-typ/touying/pull/242))
+- theme(simple): make simple-theme respect color configuration for deco-format ([#252](https://github.com/touying-typ/touying/pull/252))
+- theme(aqua,stargazer): add extra parameter to title-slide ([#291](https://github.com/touying-typ/touying/pull/291))
+
+### Fixes
+
+- fix: prevent ghost-slide blank pages from `touying-set-config` anchor regression ([#289](https://github.com/touying-typ/touying/pull/289))
+- fix: styled content on first slide no longer creates extra slides ([#287](https://github.com/touying-typ/touying/pull/287))
+- fix: remove unoutlined headings from navigation
+- fix: fix `#meanwhile` being ignored inside grid cells, boxes, and other containers ([#274](https://github.com/touying-typ/touying/pull/274))
+- fix: fix `config: parameter` silently ignored across all themes ([#273](https://github.com/touying-typ/touying/pull/273))
+- fix: fix slides after `#show`/`#set` rules not rendering subsequent slides ([#268](https://github.com/touying-typ/touying/pull/268))
+- fix: fix title page PDF page label causing pdfpc presenter notes mismatch ([#277](https://github.com/touying-typ/touying/pull/277))
+- fix: fix duplicate label error for labeled footnotes with `#pause` animations ([#275](https://github.com/touying-typ/touying/pull/275))
+- fix: fix `#pause` inside `#speaker-note` body (nested list items) ([#282](https://github.com/touying-typ/touying/pull/282))
+- theme(dewdrop): fix body content under level-1 heading was silently dropped ([#279](https://github.com/touying-typ/touying/pull/279))
+- theme(stargazer): update stargazer theme margins and fix [#259](https://github.com/touying-typ/touying/pull/259)
+
+### Documentation
+
+- **docs(BIG CHANGE): refactor docs website and add references page**
+- docs: reduce README noise, improve first impression ([#297](https://github.com/touying-typ/touying/pull/297))
+- docs: restructure docs + add docs-preview CI for PRs ([#296](https://github.com/touying-typ/touying/pull/296))
+- docs: comprehensive docstring improvements across all source files ([#294](https://github.com/touying-typ/touying/pull/294))
+
+### Miscellaneous
+
+- chore: add `copilot-setup-steps.yml` and improve `copilot-instructions.md` ([#292](https://github.com/touying-typ/touying/pull/292))
+
+### Theme Migration Guide
+
+**For theme developers upgrading to v0.6.3:**
+
+1. **Move `config` to the last position in `utils.merge-dicts`** to allow user overrides:
+   ```typst
+   // Before
+   self = utils.merge-dicts(self, config, config-page(...))
+   
+   // After
+   self = utils.merge-dicts(self, config-page(...), config)
+   ```
+
+2. **Replace `paper` with `utils.page-args-from-aspect-ratio`** to support arbitrary aspect ratios:
+   ```typst
+   // Before
+   config-page(paper: "presentation-" + aspect-ratio, ...)
+   
+   // After
+   config-page(..utils.page-args-from-aspect-ratio(aspect-ratio), ...)
+   ```
+
+## v0.6.2
+
+### Features
+
+- feat: allow customisation of `components.checkerboard` ([#161](https://github.com/touying-typ/touying/pull/161))
+
+### Fixes
+
+- fix: support ratio and relative margins for full-width headers ([#256](https://github.com/touying-typ/touying/pull/256))
+- fix: fix `magic.bibliography-as-footnote` in Typst 0.14 ([#249](https://github.com/touying-typ/touying/pull/249))
+- fix: theorion package is broken with Typst 0.14.0 ([#237](https://github.com/touying-typ/touying/pull/237))
+- fix: update `components.typ` and pass named arguments to grid ([#207](https://github.com/touying-typ/touying/pull/207))
+- fix: fix `#meanwhile` in cetz ([#205](https://github.com/touying-typ/touying/pull/205))
+- fix: documentation contains unclosed raw text error ([#187](https://github.com/touying-typ/touying/pull/187))
+- fix: use correct circle symbol ([#171](https://github.com/touying-typ/touying/pull/171))
+- fix: use regex to override colors of equations ([#167](https://github.com/touying-typ/touying/pull/167))
+- fix: `show-hide-set-list-marker-none` with full enum ([#157](https://github.com/touying-typ/touying/pull/157))
+- fix: remove dump and label-it function for better cache
+
+### Miscellaneous
+
+- docs: update README, bump versions of deps, and fix comment docs
+- ci: add more tests, bump versions of `tytanic`, and update typstyle workflow ([#221](https://github.com/touying-typ/touying/pull/221), [#261](https://github.com/touying-typ/touying/pull/261))
+
+
 ## v0.6.1
 
 Added support for the [theorion](https://github.com/OrangeX4/typst-theorion) package, and used it as the default math theorem environment.

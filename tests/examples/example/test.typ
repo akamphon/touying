@@ -1,9 +1,9 @@
 #import "/lib.typ": *
 #import themes.university: *
-#import "@preview/cetz:0.4.1"
+#import "@preview/cetz:0.4.2"
 #import "@preview/fletcher:0.5.8" as fletcher: edge, node
 #import "@preview/numbly:0.1.0": numbly
-#import "@preview/theorion:0.4.1": *
+#import "@preview/theorion:0.5.0": *
 #import cosmos.clouds: *
 #show: show-theorion
 
@@ -196,12 +196,26 @@ Fletcher Animation in Touying:
 
 = Others
 
-== Side-by-side
+== Multiple columns
 
-#slide(composer: (1fr, 1fr))[
+#cols[
   First column.
 ][
   Second column.
+]
+
+== Multiple columns with equal height blocks
+
+#cols(columns: (1fr, 1fr), gutter: 1em)[
+  #emph-block[
+    First column with equal height: #lorem(10)
+    #lazy-v(1fr)
+  ]
+][
+  #emph-block[
+    Second column with equal height: : #lorem(15)
+    #lazy-v(1fr)
+  ]
 ]
 
 
