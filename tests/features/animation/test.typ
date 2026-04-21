@@ -1,6 +1,6 @@
 #import "/lib.typ": *
 #import themes.simple: *
-#import "@preview/cetz:0.4.1"
+#import "@preview/cetz:0.4.2"
 #import "@preview/fletcher:0.5.8" as fletcher: edge, node
 
 // cetz and fletcher bindings for touying
@@ -13,7 +13,11 @@
   cover: fletcher.hide,
 )
 
-#show: simple-theme
+#show: simple-theme.with(
+  config-common(
+    show-hide-set-list-marker-none: true,
+  ),
+)
 
 = Animation
 
@@ -103,17 +107,13 @@ By factorizing, we can obtain this result.
 == only and uncover in Cetz
 
 #slide(repeat: 3, self => [
-  #let (uncover, only) = utils.methods(self)
+  #let (uncover, only, alternatives) = utils.methods(self)
 
   Cetz in Touying in subslide #self.subslide:
 
   #cetz.canvas({
     import cetz.draw: *
-    let self = utils.merge-dicts(
-      self,
-      config-methods(cover: utils.method-wrapper(hide.with(bounds: true))),
-    )
-    let (uncover,) = utils.methods(self)
+    let uncover = uncover.with(cover-fn: hide.with(bounds: true))
 
     rect((0, 0), (5, 5))
 
@@ -150,3 +150,172 @@ By factorizing, we can obtain this result.
   node((2, 0), `closed`, radius: 2em, extrude: (-2.5, 0)),
   edge((0, 0), (2, 0), `close()`, "-|>", bend: -40deg),
 )
+
+= Pause + Uncover Mixing
+
+== Pause + Uncover/Only Inline
+
+- On 1 #pause
+- On 2 #pause
+- #uncover("2-")[Uncover 2-]  // was hidden even on subslide 2
+// - #{
+//     uncover("2-")[
+//       Uncover 2- in bare sequence
+//     ]
+//   }
+- #only(2)[Only 2]           // was hidden even on subslide 2
+- On 3
+
+// #{
+//   only(2)[Only 2 in bare sequence]
+// }
+
+== Pause + Alternatives Inline
+
+Text #pause then #alternatives[Alt 1][Alt 2] and more.
+
+= Jump
+
+== jump(n, relative: true) — relative stepping
+
+`#jump(1, relative: true)` is equivalent to `#pause`:
+
+A #jump(1, relative: true) B #jump(1, relative: true) C
+
+`#jump(2, relative: true)` skips an extra subslide:
+
+X #jump(2, relative: true) Z
+
+
+== jump(n) — absolute jumping
+
+`#jump(1)` is equivalent to `#meanwhile`:
+
+First #pause Second #jump(1) Always visible
+
+`#jump(3)` jumps to absolute subslide 3:
+
+Part A #pause Part B #jump(3) Part C
+
+
+== jump negative relative in CeTZ
+
+#cetz-canvas({
+  import cetz.draw: *
+
+  rect((0, 0), (5, 5))
+
+  (jump(1, relative: true),)
+
+  rect((0, 0), (2, 2))
+
+  (jump(-1, relative: true),)
+
+  circle((3.5, 3.5), radius: 1)
+})
+
+// some hard tests for weird possible behaviours.
+// == bare sequences test
+
+// // === Test 1: Bare sequence as direct sibling after fn-wrapper ===
+// Text before #pause
+// #uncover("2-")[Direct uncover]
+// #{
+//   uncover("2-")[Bare sequence uncover — same last-subslide]
+// }
+// After all
+
+// // === Test 2: Two fn-wrappers inside a grid (table-like handler) ===
+// Text before #pause
+// #grid(columns: (1fr, 1fr),
+//   uncover("2-")[Grid col 1],
+//   only(2)[Grid col 2 only],
+// )
+// After grid
+//
+// #pause
+// After grid pause
+
+// // === Test 3: fn-wrapper inside columns ===
+// Text before #pause
+// #columns(2)[
+//   #uncover("2-")[In columns]
+// ]
+// After columns
+
+// // === Test 4: fn-wrapper inside place ===
+// Text before #pause
+// #place(top + right, uncover("2-")[Placed uncover])
+// After place
+
+// // === Test 5: fn-wrapper inside rotate ===
+// Text before #pause
+// #rotate(5deg, uncover("2-")[Rotated uncover])
+// After rotate
+
+// // === Test 6: Nested — fn-wrapper in bare sequence inside columns ===
+// Text before #pause
+// #columns(2)[
+//   #{
+//     uncover("2-")[Nested bare seq in columns]
+//   }
+// ]
+// After nested
+
+// // === Test 7: only() as direct top-level content after pause + uncover ===
+// Text before #pause
+// #uncover("2-")[Direct uncover]
+// #only(2)[Direct only — same last-subslide as uncover]
+// After both
+
+// // === Test 8: double grid
+// Text #pause
+// #grid(columns: 1, uncover("1-")[First grid — always visible])
+// #grid(columns: 1, uncover("1-")[Second grid — always visible])
+// After
+
+
+// // === Test 9: double bare sequence, with nested bare sequence
+// Text #pause
+// #{
+//  uncover("1-")[First bare seq — always visible]
+// }
+// #{
+//  uncover("1-")[Second bare seq — always visible]
+//  {
+//    uncover("2-")[Nested bare seq — from 2 onward]
+//  }
+// }
+// After
+
+
+// == Nasty: Deep nesting
+// First #pause
+// #box(stroke:1pt)[
+//   #strong[
+//     #uncover("2-")[Deep nested uncover]
+//   ]
+//   #pause
+//   #only(3)[Only 3 in box]
+// ]
+// #columns(2)[
+//   #only("2-")[Col only 2-]
+//   #pause
+//   Final column text
+// ]
+// Last line
+
+// == Nasty: item-by-item + containers
+// #item-by-item[
+//   - One
+//   - Two
+//   - Three
+// ]
+// #pause
+// #grid(columns: (1fr, 1fr),
+//   only(5)[Grid only-5],
+//   uncover("4-")[Grid uncover 4-],
+// )
+// #rotate(3deg, uncover("1-")[Rotated always])
+// #box[#only(6)[Box only-6]]\
+// Done at 4.

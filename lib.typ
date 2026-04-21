@@ -8,20 +8,21 @@
 ///
 /// == Example
 ///
-/// Split slides by headings #link("https://touying-typ.github.io/docs/sections")[document]
+/// Split slides by headings #link("https://touying-typ.github.io/docs/tutorials/sections")[document]
 ///
-/// #example(```
-/// #import "@preview/touying:0.6.1": *
-/// #import themes.dewdrop: *
+/// #example(````
+/// #import "@preview/touying:0.7.1": *
+/// #import themes.simple: *
 ///
 /// >>> #let is-dark = sys.inputs.at("x-color-theme", default: none) == "dark";
-/// >>> #let text-color = if is-dark { rgb("#c0caf5") } else { black };
-/// >>>
-/// >>> #show: dewdrop-theme.with(
+/// >>> #let text-color = if is-dark { std.white } else { std.black };
+/// >>> #show: simple-theme.with(
 /// >>>   aspect-ratio: "16-9",
+/// >>>   config-page(width: 320pt, height: 180pt),
 /// >>>   config-colors(neutral-lightest: none, neutral-darkest: text-color),
 /// >>> )
-/// <<< #show: dewdrop-theme.with(aspect-ratio: "16-9")
+/// >>> #set text(.5em)
+/// <<< #show: simple-theme.with(aspect-ratio: "16-9")
 ///
 /// = Section
 ///
@@ -30,13 +31,35 @@
 /// === Title
 ///
 /// Hello, Touying!
-/// ```)
+/// ````)
 ///
 /// == Example
 ///
-/// `#pause` and `#meanwhile` animations #link("https://touying-typ.github.io/docs/dynamic/simple")[document]
+/// `#pause` and `#meanwhile` animations #link("https://touying-typ.github.io/docs/tutorials/dynamic/simple")[document]
 ///
 /// #example(```
+/// #import "@preview/touying:0.7.1": *
+/// #import themes.simple: *
+///
+/// >>> #let is-dark = sys.inputs.at("x-color-theme", default: none) == "dark";
+/// >>> #let text-color = if is-dark { std.white } else { std.black };
+/// >>> #show: simple-theme.with(
+/// >>>   aspect-ratio: "16-9",
+/// >>>   config-page(width: 320pt, height: 180pt),
+/// >>>   config-colors(neutral-lightest: none, neutral-darkest: text-color),
+/// >>> )
+/// >>> #set text(.5em)
+/// <<< #show: simple-theme.with(aspect-ratio: "16-9")
+///
+/// = Section
+///
+/// == Subsection
+///
+/// First, we pause here.
+///
+/// #pause
+///
+/// Then, we continue with the next part.
 /// ```)
 
 #import "src/exports.typ": *

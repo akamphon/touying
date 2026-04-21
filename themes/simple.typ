@@ -17,9 +17,9 @@
 ///
 ///   For example, `#slide(composer: (1fr, 2fr, 1fr))[A][B][C]` to split the slide into three parts. The first and the last parts will take 1/4 of the slide, and the second part will take 1/2 of the slide.
 ///
-///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `components.side-by-side` function.
+///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `cols` function.
 ///
-///   The `components.side-by-side` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
+///   The `cols` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
 ///
 ///   For example, `#slide(composer: 2)[A][B][#grid.cell(colspan: 2)[Footer]]` will make the `Footer` cell take 2 columns.
 ///
@@ -33,7 +33,7 @@
   composer: auto,
   ..bodies,
 ) = touying-slide-wrapper(self => {
-  let deco-format(it) = text(size: .6em, fill: gray, it)
+  let deco-format(it) = text(size: .6em, fill: self.colors.neutral-light, it)
   let header(self) = deco-format(
     components.left-and-right(
       utils.call-or-display(self, self.store.header),
@@ -85,7 +85,7 @@
 ///
 /// - config (dictionary): The configuration of the slide. You can use `config-xxx` to set the configuration of the slide. For more several configurations, you can use `utils.merge-dicts` to merge them.
 #let title-slide(config: (:), body) = centered-slide(
-  config: utils.merge-dicts(config, config-common(freeze-slide-counter: true)),
+  config: utils.merge-dicts(config-common(freeze-slide-counter: true), config),
   body,
 )
 
@@ -134,7 +134,7 @@
 /// Example:
 ///
 /// ```typst
-/// #show: simple-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))`
+/// #show: simple-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))
 /// ```
 ///
 /// The default colors:
@@ -183,7 +183,7 @@
 ) = {
   show: touying-slides.with(
     config-page(
-      paper: "presentation-" + aspect-ratio,
+      ..utils.page-args-from-aspect-ratio(aspect-ratio),
       margin: 2em,
       footer-descent: 0em,
     ),

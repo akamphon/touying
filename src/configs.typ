@@ -1,7 +1,9 @@
 #import "pdfpc.typ"
 #import "utils.typ"
 #import "magic.typ"
-#import "core.typ": slide, touying-slide, touying-slide-wrapper
+#import "core.typ": (
+  slide, touying-fn-wrapper-raw, touying-slide, touying-slide-wrapper,
+)
 
 #let _default = metadata((kind: "touying-default"))
 
@@ -15,7 +17,24 @@
   return new-dict
 }
 
-/// The private configurations of the theme.
+/// Store theme-specific private data in the presentation context.
+///
+/// Use this in your theme's `#show: my-theme.with(...)` to pass arbitrary key-value pairs that your theme needs internally. The stored values are accessible via `self.store.<key>` inside any theme function.
+///
+/// This also registers your theme's config to be readable by `touying-get-config`.
+///
+/// Example:
+///
+/// ```typst
+/// config-store(
+///   header-height: 2em,
+///   show-logo: true,
+/// )
+/// ```
+///
+/// - args (arguments): Named key-value pairs to store in `self.store`.
+///
+/// -> dictionary
 #let config-store(..args) = {
   assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
   return (store: args.named())
@@ -64,7 +83,7 @@
     } else {
       args
     }
-    magic.record-bibliography(bibliography)
+    place(hide(bibliography))
   }
 }
 
@@ -73,7 +92,7 @@
     counter(footnote).update(0)
   }
   if self.at("reset-page-counter-to-slide-counter", default: true) {
-    context counter(page).update(utils.slide-counter.get())
+    context counter(page).update(calc.max(1, utils.slide-counter.get().first()))
   }
   if self.at("enable-pdfpc", default: true) {
     context [
@@ -82,7 +101,7 @@
       #metadata((t: "Overlay", v: self.subslide - 1)) <pdfpc>
       #metadata((
         t: "LogicalSlide",
-        v: utils.slide-counter.get().first(),
+        v: calc.max(1, utils.slide-counter.get().first()),
       )) <pdfpc>
     ]
   }
@@ -97,7 +116,15 @@
 
 /// The common configurations of the slides.
 ///
-/// - handout (boolean): Whether to enable the handout mode. It retains only the last subslide of each slide in handout mode. Default is `false`.
+/// - breakable (bool): Whether to allow slide content to overflow to the next page. When `true` (default), content that exceeds the slide height will automatically create new pages. When `false`, content is constrained to a single page using a non-breakable block, which is useful for ensuring a strict one-to-one mapping between source slides and output pages in agentic workflows. Default is `true`.
+///
+/// - clip (bool): Whether to clip overflowing slide content when `breakable` is `false`. When `true`, content that exceeds the slide height will be visually truncated. When `false`, overflowing content remains visible but does not create new pages. Only takes effect when `breakable` is `false`. Default is `false`.
+///
+/// - detect-overflow (bool): Whether to detect and warn on slide content overflow when `breakable` is `false`. When `true`, a layout measurement is performed and a warning is emitted if the content height exceeds the available slide height, which is useful for catching overflow early in agentic workflows without aborting compilation. When `false`, no overflow detection is performed. Only takes effect when `breakable` is `false`. Default is `true`.
+///
+/// - handout (bool): Whether to enable the handout mode. By default, it retains only the last subslide of each slide, but this can be overridden via `handout-subslides`. Default is `false`.
+///
+/// - handout-subslides (none, int, array, str): The subslides to include in handout mode. Accepts the same format as `visible-subslides` (e.g. `2`, `(1, 3)`, `"2-"`, `"1, 3-5"`). When `none`, the last subslide is used (default behavior). Default is `none`.
 ///
 /// - slide-level (int): The level of the slides. Default is `2`, which means the level 1 and 2 headings will be treated as slides.
 ///
@@ -111,59 +138,63 @@
 ///
 /// - new-subsubsubsection-slide-fn (function): The function to create a new slide for a new subsubsubsection. Default is `none`.
 ///
-/// - receive-body-for-new-section-slide-fn (boolean): Whether to receive the body for the new section slide function. Default is `true`.
+/// - receive-body-for-new-section-slide-fn (bool): Whether to receive the body for the new section slide function. Default is `true`.
 ///
-/// - receive-body-for-new-subsection-slide-fn (boolean): Whether to receive the body for the new subsection slide function. Default is `true`.
+/// - receive-body-for-new-subsection-slide-fn (bool): Whether to receive the body for the new subsection slide function. Default is `true`.
 ///
-/// - receive-body-for-new-subsubsection-slide-fn (boolean): Whether to receive the body for the new subsubsection slide function. Default is `true`.
+/// - receive-body-for-new-subsubsection-slide-fn (bool): Whether to receive the body for the new subsubsection slide function. Default is `true`.
 ///
-/// - receive-body-for-new-subsubsubsection-slide-fn (boolean): Whether to receive the body for the new subsubsubsection slide function. Default is `true`.
+/// - receive-body-for-new-subsubsubsection-slide-fn (bool): Whether to receive the body for the new subsubsubsection slide function. Default is `true`.
 ///
-/// - show-strong-with-alert (boolean): Whether to show strong with alert. Default is `true`.
+/// - show-strong-with-alert (bool): Whether to show strong with alert. Default is `true`.
 ///
-/// - datetime-format (auto, string): The format of the datetime. Default is `auto`.
+/// - datetime-format (auto, str): The format of the datetime. Default is `auto`.
 ///
-/// - appendix (boolean): Is touying in the appendix mode. The last-slide-counter will be frozen in the appendix mode. Default is `false`.
+/// - appendix (bool): Is touying in the appendix mode. The last-slide-counter will be frozen in the appendix mode. Default is `false`.
 ///
-/// - freeze-slide-counter (boolean): Whether to freeze the slide counter. Default is `false`.
+/// - freeze-slide-counter (bool): Whether to freeze the slide counter. Default is `false`.
 ///
-/// - zero-margin-header (boolean): Whether to show the full header (with negative padding). Default is `true`.
+/// - zero-margin-header (bool): Whether to show the full header (with negative padding). Default is `true`.
 ///
-/// - zero-margin-footer (boolean): Whether to show the full footer (with negative padding). Default is `true`.
+/// - zero-margin-footer (bool): Whether to show the full footer (with negative padding). Default is `true`.
 ///
-/// - auto-offset-for-heading (boolean): Whether to add an offset relative to slide-level for headings. Default is `true`.
+/// - auto-offset-for-heading (bool): Whether to add an offset relative to slide-level for headings. Default is `true`.
 ///
-/// - enable-pdfpc (boolean): Whether to add `<pdfpc-file>` label for querying. Default is `true`.
+/// - enable-pdfpc (bool): Whether to add `<pdfpc-file>` label for querying. Default is `true`.
 ///
 ///   You can export the .pdfpc file directly using: `typst query --root . ./example.typ --field value --one "<pdfpc-file>" > ./example.pdfpc`
 ///
-/// - enable-mark-warning (boolean): Whether to enable the mark warning. Default is `true`.
+/// - enable-mark-warning (bool): Whether to enable the mark warning. Default is `true`.
 ///
-/// - reset-page-counter-to-slide-counter (boolean): Whether to reset the page counter to the slide counter. Default is `true`.
+/// - reset-page-counter-to-slide-counter (bool): Whether to reset the page counter to the slide counter. Default is `true`.
+///
+/// - show-only-notes (bool): Whether to show the speaker notes as the main content with the slide shown as a small thumbnail in the top right corner. Default is `false`.
+///
+///   This is similar to LaTeX Beamer's `\setbeameroption{show only notes}`. It is useful for using speaker notes with presentation tools that let you load two PDFs and synchronize them, one to display on the main screen and one on the auxiliary screen.
 ///
 /// - show-notes-on-second-screen (none, alignment): Whether to show the speaker notes on the second screen. Default is `none`.
 ///
 ///   Currently, the alignment can be `none`, `bottom`, and `right`.
 ///
-/// - horizontal-line-to-pagebreak (boolean): Whether to convert horizontal lines to page breaks. Default is `true`.
+/// - horizontal-line-to-pagebreak (bool): Whether to convert horizontal lines to page breaks. Default is `true`.
 ///
 ///   You can use markdown-like syntax `---` to divide slides.
 ///
-/// - reset-footnote-number-per-slide (boolean): Whether to reset the footnote number per slide. Default is `true`.
+/// - reset-footnote-number-per-slide (bool): Whether to reset the footnote number per slide. Default is `true`.
 ///
-/// - nontight-list-enum-and-terms (boolean): Whether to make `tight` argument always be `false` for list, enum, and terms. Default is `false`.
+/// - nontight-list-enum-and-terms (bool): Whether to make `tight` argument always be `false` for list, enum, and terms. Default is `false`.
 ///
-/// - align-list-marker-with-baseline (boolean): Whether to align the list marker with the baseline. Default is `false`.
+/// - align-list-marker-with-baseline (bool): Whether to align the list marker with the baseline. Default is `false`.
 ///
-/// - align-enum-marker-with-baseline (boolean): Whether to align the enum marker with the baseline. Default is `false`. It will only work when the enum item has a number like `1.`.
+/// - align-enum-marker-with-baseline (bool): Whether to align the enum marker with the baseline. Default is `false`. It will only work when the enum item has a number like `1.`.
 ///
 /// - scale-list-items (none, float): Whether to scale the list items recursively. For example, `scale-list-items: 0.8` will scale the list items by 0.8. Default is `none`.
 ///
-/// - enable-frozen-states-and-counters (boolean): Whether to enable the frozen states and counters. It is useful for equations, figures, and theorems. Default is `true`.
+/// - enable-frozen-states-and-counters (bool): Whether to enable the frozen states and counters. It is useful for equations, figures, and theorems. Default is `true`.
 ///
-/// - show-hide-set-list-marker-none (boolean): Whether to set the list marker to none for hide function. Default is `true`.
+/// - show-hide-set-list-marker-none (bool): Whether to set the list marker to none for hide function. Default is `true`.
 ///
-/// - show-bibliography-as-footnote (boolean): Whether to show the bibliography as footnote. Default is `none`.
+/// - show-bibliography-as-footnote (bool): Whether to show the bibliography as footnote. Default is `none`.
 ///
 ///   It receives a bibliography function like `bibliography(title: none, "ref.bib")`, or a dict like `(numbering: "[1]", bibliography: bibliography(title: none, "ref.bib"))`.
 ///
@@ -175,7 +206,7 @@
 ///
 /// - default-frozen-counters (array): The default frozen counters for the frozen states and counters. The default value is `(counter(math.equation), counter(figure.where(kind: table)), counter(figure.where(kind: image)))`.
 ///
-/// - label-only-on-last-subslide (array): We only label some contents in the last subslide, which is useful for ref equations, figures, and theorems with multiple subslides. Default is `(figure, math.equation)`.
+/// - label-only-on-last-subslide (array): We only label some contents in the last subslide, which is useful for ref equations, figures, footnotes, and theorems with multiple subslides. Default is `(figure, math.equation, footnote)`.
 ///
 /// - preamble (function): The function to run before each slide. Default is `none`.
 ///
@@ -192,8 +223,18 @@
 /// - page-preamble (function): The function to run before each page. Default is `none`.
 ///
 /// - default-page-preamble (function): The default preamble for each page. Default is a function to reset the footnote number per slide and reset the page counter to the slide counter.
+///
+/// - default-composer (auto, function, array): The default composer for slides. It is used when the `composer` argument of the `slide` function is `auto`. Default is `auto`, which falls back to using `cols.with(lazy-layout: false)`.
+///
+///   For example, `config-common(default-composer: cols.with(lazy-layout: false, gutter: 2em))` sets the default gutter between columns to `2em` for all slides.
+///
+/// -> dictionary
 #let config-common(
+  breakable: _default,
+  clip: _default,
+  detect-overflow: _default,
   handout: _default,
+  handout-subslides: _default,
   slide-level: _default,
   slide-fn: _default,
   new-section-slide-fn: _default,
@@ -230,6 +271,7 @@
   default-subslide-preamble: _default,
   page-preamble: _default,
   default-page-preamble: _default,
+  show-only-notes: _default,
   show-notes-on-second-screen: _default,
   horizontal-line-to-pagebreak: _default,
   reset-footnote-number-per-slide: _default,
@@ -239,12 +281,17 @@
   scale-list-items: _default,
   show-hide-set-list-marker-none: _default,
   show-bibliography-as-footnote: _default,
+  default-composer: _default,
   ..args,
 ) = {
   assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
   return (
     _get-dict-without-default((
+      breakable: breakable,
+      clip: clip,
+      detect-overflow: detect-overflow,
       handout: handout,
+      handout-subslides: handout-subslides,
       slide-level: slide-level,
       slide-fn: slide-fn,
       new-section-slide-fn: new-section-slide-fn,
@@ -279,6 +326,7 @@
       default-subslide-preamble: default-subslide-preamble,
       page-preamble: page-preamble,
       default-page-preamble: default-page-preamble,
+      show-only-notes: show-only-notes,
       show-notes-on-second-screen: show-notes-on-second-screen,
       horizontal-line-to-pagebreak: horizontal-line-to-pagebreak,
       reset-footnote-number-per-slide: reset-footnote-number-per-slide,
@@ -288,6 +336,7 @@
       scale-list-items: scale-list-items,
       show-hide-set-list-marker-none: show-hide-set-list-marker-none,
       show-bibliography-as-footnote: show-bibliography-as-footnote,
+      default-composer: default-composer,
     ))
       + args.named()
   )
@@ -300,31 +349,56 @@
 
 #let _default-cover = utils.method-wrapper(hide)
 
-#let _default-show-notes(self: none, width: 0pt, height: 0pt) = block(
-  fill: rgb("#E6E6E6"),
-  width: width,
-  height: height,
-  {
-    set align(left + top)
-    set text(size: 24pt, fill: black, weight: "regular")
-    block(
-      width: 100%,
-      height: 88pt,
-      inset: (left: 32pt, top: 16pt),
-      outset: 0pt,
-      fill: rgb("#CCCCCC"),
-      {
-        utils.display-current-heading(level: 1, depth: self.slide-level)
-        linebreak()
-        [ --- ]
-        utils.display-current-heading(level: 2, depth: self.slide-level)
-      },
-    )
+#let _default-show-only-notes(
+  self: none,
+  width: 0pt,
+  height: 0pt,
+  cutout: false,
+) = {
+  let header-fill = rgb("#CCCCCC")
+  let header-height = 88pt
+  let header-content = {
+    utils.display-current-heading(level: 1, depth: self.slide-level)
+    linebreak()
+    [ --- ]
+    utils.display-current-heading(level: 2, depth: self.slide-level)
+  }
+  let body-fill = rgb("#E6E6E6")
+  let body-content = {
     pad(x: 48pt, utils.current-slide-note)
     // clear the slide note
     utils.slide-note-state.update(none)
-  },
-)
+  }
+
+  let template(hdr-fill, hdr-content, bdy-fill, bdy-content) = block(
+    fill: bdy-fill,
+    width: width,
+    height: height,
+    {
+      set align(left + top)
+      set text(size: 24pt, fill: black, weight: "regular")
+      block(
+        width: 100%,
+        height: header-height,
+        inset: (left: 32pt, top: 16pt),
+        outset: 0pt,
+        fill: hdr-fill,
+        hdr-content,
+      )
+      bdy-content
+    },
+  )
+
+  if cutout {
+    (
+      background: template(header-fill, none, body-fill, none),
+      foreground: template(none, header-content, none, body-content),
+      cutout-height: header-height,
+    )
+  } else {
+    template(header-fill, header-content, body-fill, body-content)
+  }
+}
 
 #let _default-alert = utils.method-wrapper(text.with(weight: "bold"))
 
@@ -354,15 +428,19 @@
 ///
 /// - alternatives-cases (function): The function to show alternatives with cases. The default value is `utils.alternatives-cases` function.
 ///
+/// - item-by-item (function): The function to show items one by one. The default value is `utils.item-by-item` function.
+///
 /// - alert (function): The function to alert the content. The default value is `utils.method-wrapper(text.with(weight: "bold"))` function.
 ///
-/// - show-notes (function): The function to show notes on second screen. It should be `(self: none, width: 0pt, height: 0pt) => { .. }` with core code `utils.current-slide-note` and `utils.slide-note-state.update(none)`.
+/// - show-only-notes (function): The function used to render speaker notes, either as the primary content (`show-only-notes: true` mode) or on a second screen. It should accept `(self: none, width: 0pt, height: 0pt, cutout: false)`. When `cutout: true`, return a dictionary with `background`, `foreground`, and `cutout-height` keys.
 ///
 /// - convert-label-to-short-heading (function): The function to convert label to short heading. It is useful for the short heading for heading with label. It will be used in function with `short-heading`.
 ///
 ///   The default value is `utils.titlecase(lbl.replace(regex("^[^:]*:"), "").replace("_", " ").replace("-", " "))`.
 ///
 ///   It means that some headings with labels like `section:my-section` will be converted to `My Section`.
+///
+/// -> dictionary
 #let config-methods(
   // init
   init: _default,
@@ -375,10 +453,11 @@
   alternatives: _default,
   alternatives-fn: _default,
   alternatives-cases: _default,
+  item-by-item: _default,
   // alert interface
   alert: _default,
   // show notes
-  show-notes: _default,
+  show-only-notes: _default,
   // convert label to short heading
   convert-label-to-short-heading: _default,
   ..args,
@@ -395,8 +474,9 @@
       alternatives: alternatives,
       alternatives-fn: alternatives-fn,
       alternatives-cases: alternatives-cases,
+      item-by-item: item-by-item,
       alert: alert,
-      show-notes: show-notes,
+      show-only-notes: show-only-notes,
       convert-label-to-short-heading: convert-label-to-short-heading,
     ))
       + args.named(),
@@ -415,17 +495,18 @@
 ///   author: "Author",
 ///   date: datetime.today(),
 ///   institution: "Institution",
+///   contact: "name@mail.com",
 /// )
 /// ```
 ///
 /// - title (content): The title of the presentation, which will be displayed in the title slide.
-/// - short-title (content, auto): The short title of the presentation, which will be displayed in the footer of the slides usally.
+/// - short-title (content, auto): The short title of the presentation, which will usually be displayed in the footer of the slides.
 ///
 ///   If you set it to `auto`, it will be the same as the title.
 ///
 /// - subtitle (content): The subtitle of the presentation.
 ///
-/// - short-subtitle (content, auto): The short subtitle of the presentation, which will be displayed in the footer of the slides usally.
+/// - short-subtitle (content, auto): The short subtitle of the presentation, which will usually be displayed in the footer of the slides.
 ///
 ///   If you set it to `auto`, it will be the same as the subtitle.
 ///
@@ -437,7 +518,13 @@
 ///
 /// - institution (content): The institution of the presentation.
 ///
+/// - contact (content): Contact information for the presentation.
+///
 /// - logo (content): The logo of the institution.
+///
+/// - extra (dict): A dict of extra information. You may use it like `extra: (key1: value1, key2: value2)` to pass extra information. A theme can then access it as `self.info.extra.key1`, `self.info.extra.key2`.
+///
+/// -> dictionary
 #let config-info(
   title: _default,
   short-title: _default,
@@ -446,7 +533,9 @@
   author: _default,
   date: _default,
   institution: _default,
+  contact: _default,
   logo: _default,
+  extra: _default,
   ..args,
 ) = {
   assert(args.pos().len() == 0, message: "Unexpected positional arguments.")
@@ -459,7 +548,9 @@
       author: author,
       date: date,
       institution: institution,
+      contact: contact,
       logo: logo,
+      extra: extra,
     ))
       + args.named(),
   )
@@ -482,8 +573,11 @@
 ///
 /// IMPORTANT: The colors should be defined in the *RGB* format at most cases.
 ///
-/// There are four main colors in the theme: primary, secondary, tertiary, and neutral,
-/// and each of them has a light, lighter, lightest, dark, darker, and darkest version.
+/// There are four main color groups: `primary`, `secondary`, `tertiary`, and `neutral`.
+/// Each group includes the base color plus variants: `light`, `lighter`, `lightest`, `dark`, `darker`, `darkest`.
+/// For example, `primary`, `primary-light`, `primary-lightest`, `neutral-darkest`, etc.
+///
+/// -> dictionary
 #let config-colors(
   neutral: _default,
   neutral-light: _default,
@@ -567,7 +661,7 @@
 /// )
 /// ```
 ///
-/// - paper (string): A standard paper size to set width and height. The default value is "presentation-16-9".
+/// - paper (str): A standard paper size to set width and height. The default value is `"presentation-16-9"`.
 ///
 ///   You can also use `aspect-ratio` to set the aspect ratio of the paper.
 ///
@@ -590,9 +684,11 @@
 ///     - y: The vertical margins.
 ///     - rest: The margins on all sides except those for which the dictionary explicitly sets a size.
 ///
-/// - numbering (string, function): The numbering style of the page. The default value is `"1"`.
+/// - numbering (str, function): The numbering style of the page. The default value is `"1"`.
 ///
 ///   The values for left and right are mutually exclusive with the values for inside and outside.
+///
+/// -> dictionary
 #let config-page(
   paper: _default,
   header: _default,
@@ -617,20 +713,24 @@
 }
 
 
-/// The default configurations
+/// The default configuration values used when no explicit configuration is provided.
 #let default-config = utils.merge-dicts(
   config-common(
+    breakable: true,
+    clip: false,
+    detect-overflow: true,
     handout: false,
+    handout-subslides: none,
     slide-level: 2,
     slide-fn: slide,
     new-section-slide-fn: none,
     new-subsection-slide-fn: none,
     new-subsubsection-slide-fn: none,
     new-subsubsubsection-slide-fn: none,
-    receive-body-for-new-section-slide-fn: true,
-    receive-body-for-new-subsection-slide-fn: true,
-    receive-body-for-new-subsubsection-slide-fn: true,
-    receive-body-for-new-subsubsubsection-slide-fn: true,
+    receive-body-for-new-section-slide-fn: false,
+    receive-body-for-new-subsection-slide-fn: false,
+    receive-body-for-new-subsubsection-slide-fn: false,
+    receive-body-for-new-subsubsubsection-slide-fn: false,
     show-strong-with-alert: true,
     datetime-format: auto,
     appendix: false,
@@ -643,6 +743,7 @@
     reset-page-counter-to-slide-counter: true,
     // some black magics for better slides writing,
     // maybe will be deprecated in the future
+    show-only-notes: false,
     show-notes-on-second-screen: none,
     horizontal-line-to-pagebreak: true,
     reset-footnote-number-per-slide: true,
@@ -657,7 +758,7 @@
     default-frozen-states: _default-frozen-states,
     frozen-counters: (),
     default-frozen-counters: _default-frozen-counters,
-    label-only-on-last-subslide: (figure, math.equation, heading),
+    label-only-on-last-subslide: (figure, math.equation, heading, footnote),
     preamble: none,
     default-preamble: _default-preamble,
     slide-preamble: none,
@@ -679,10 +780,11 @@
     alternatives: utils.alternatives,
     alternatives-fn: utils.alternatives-fn,
     alternatives-cases: utils.alternatives-cases,
+    item-by-item: utils.item-by-item,
     // alert interface
     alert: _default-alert,
     // show notes
-    show-notes: _default-show-notes,
+    show-only-notes: _default-show-only-notes,
     // convert label to short heading
     convert-label-to-short-heading: _default-convert-label-to-short-heading,
   ),
@@ -694,7 +796,9 @@
     author: none,
     date: none,
     institution: none,
+    contact: none,
     logo: none,
+    extra: (:),
   ),
   config-colors(
     neutral: rgb("#303030"),
@@ -735,3 +839,134 @@
   ),
   config-store(),
 )
+
+/// Gets the current config at the point of the call. Returns a dict with context evaluated values.
+///
+/// Usage:
+/// ```typc
+/// touying-get-config() // returns the whole config dict
+/// touying-get-config().common.handout // returns the value of the "handout" config in the "common" category
+/// touying-get-config().handout // same as above. common is also registered at the top level.
+/// touying-get-config("commmon.handout") // same as above. You can also query with a key, and you will get the subconfig or value back.
+/// ```
+///
+/// - key (str): The key of the subconfiguration to retrieve. Default `none`, returns the entire config. May also be passed in as a positional argument.
+///   Only necessary when you set custom keys into touyings' config. Theme configuration is naturally available as `touying-get-config().store.long-theme-key`
+/// - default (any): The default value to return if the key is not found.
+/// -> dict
+#let touying-get-config(key: none, default: type, ..args) = {
+  assert(
+    args.pos().len() <= 1,
+    message: "Only one positional argument is allowed.",
+  )
+  assert(
+    args.named().len() == 0,
+    message: "Unexpected named arguments: " + args.named().keys().join(", "),
+  )
+  assert(
+    type(key) == str or key == none,
+    message: "Key must be a string or none.",
+  )
+  let key_ = key
+  if args.pos().len() == 1 {
+    key_ = args.pos().first()
+  }
+
+  let rec-defer-retrieval(config, keychain, default: type) = {
+    if type(config) == dictionary {
+      let defered = (:)
+      for k in config.keys() {
+        defered.insert(k, rec-defer-retrieval(
+          config.at(k),
+          keychain + (k,),
+          default: default,
+        ))
+      }
+      return defered
+    } else {
+      //when we reached a leaf value in the config, we evaluate it at context time via keychain.
+      return touying-fn-wrapper-raw((self: none) => {
+        let value = self
+        for cur in keychain {
+          if cur not in value.keys() and default != type {
+            return default
+          }
+          value = value.at(cur)
+        }
+        return repr(value)
+      })
+    }
+  }
+
+  let rec-defer-retrieval-with-key(
+    config,
+    keychain,
+    key: none,
+    default: type,
+  ) = {
+    if type(config) == dictionary {
+      if key != none {
+        let first-dot = key.position(".")
+        let this-key = none
+        let rest-key = none
+        if first-dot == none {
+          this-key = key
+          rest-key = none
+        } else {
+          this-key = key.slice(0, first-dot)
+          rest-key = key.slice(first-dot + 1)
+        }
+        if this-key in config.keys() {
+          return rec-defer-retrieval-with-key(
+            config.at(this-key),
+            keychain + (this-key,),
+            key: rest-key,
+            default: default,
+          )
+        } else {
+          // store on keychain anyway, but set config to none,
+          // we use the fn-wrapper to try to retrieve the value instead at context time
+          // will likely break, but who knows what users do.
+          let rest-keychain = if rest-key != none {
+            rest-key.split(".")
+          } else {
+            ()
+          }
+          return rec-defer-retrieval(
+            none,
+            keychain + (this-key,) + rest-keychain,
+            default: default,
+          )
+        }
+      } else {
+        // key == none, got to the end of given key, before found a leaf value. returns the deferred unresolved config
+        return rec-defer-retrieval(config, keychain, default: default)
+      }
+    } else if key == none {
+      // found a value and key is also empty, returned deferred result
+      return rec-defer-retrieval(none, keychain, default: default)
+    } else {
+      // got a leaf value, but key is not empty.
+      if default != type {
+        return default
+      }
+      panic(
+        "Key not found in config. Resolved correctly: "
+          + keychain.join(".")
+          + ", but got unresolved part: "
+          + key,
+      )
+    }
+  }
+
+  if key_ == none {
+    return rec-defer-retrieval(default-config, (), default: default)
+  } else {
+    return rec-defer-retrieval-with-key(
+      default-config,
+      (),
+      key: key_,
+      default: default,
+    )
+  }
+}

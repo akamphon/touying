@@ -16,9 +16,9 @@
 ///
 ///   For example, `#slide(composer: (1fr, 2fr, 1fr))[A][B][C]` to split the slide into three parts. The first and the last parts will take 1/4 of the slide, and the second part will take 1/2 of the slide.
 ///
-///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `components.side-by-side` function.
+///   If you pass a non-function value like `(1fr, 2fr, 1fr)`, it will be assumed to be the first argument of the `cols` function.
 ///
-///   The `components.side-by-side` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
+///   The `cols` function is a simple wrapper of the `grid` function. It means you can use the `grid.cell(colspan: 2, ..)` to make the cell take 2 columns.
 ///
 ///   For example, `#slide(composer: 2)[A][B][#grid.cell(colspan: 2)[Footer]]` will make the `Footer` cell take 2 columns.
 ///
@@ -141,8 +141,8 @@
 ) = touying-slide-wrapper(self => {
   self = utils.merge-dicts(
     self,
-    config,
     config-common(freeze-slide-counter: true),
+    config,
   )
   let info = self.info + args.named()
   info.authors = {
@@ -176,19 +176,31 @@
           },
         )
         set text(size: .8em)
-        grid(
-          columns: (1fr,) * calc.min(info.authors.len(), 3),
-          column-gutter: 1em,
-          row-gutter: 1em,
-          ..info.authors.map(author => text(
-            fill: self.colors.neutral-darkest,
-            author,
-          ))
+        stack(
+          dir: ttb,
+          spacing: 1em,
+          ..info
+            .authors
+            .chunks(3)
+            .map(author-chunk => {
+              grid(
+                columns: (1fr,) * author-chunk.len(),
+                column-gutter: 1em,
+                ..author-chunk.map(author => text(
+                  fill: self.colors.neutral-darkest,
+                  author,
+                ))
+              )
+            }),
         )
         v(1em)
         if info.institution != none {
           parbreak()
           text(size: .9em, info.institution)
+        }
+        if info.contact != none {
+          parbreak()
+          text(size: .9em, info.contact)
         }
         if info.date != none {
           parbreak()
@@ -323,7 +335,7 @@
 /// Example:
 ///
 /// ```typst
-/// #show: university-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))`
+/// #show: university-theme.with(aspect-ratio: "16-9", config-colors(primary: blue))
 /// ```
 ///
 /// The default colors:
@@ -382,7 +394,7 @@
 ) = {
   show: touying-slides.with(
     config-page(
-      paper: "presentation-" + aspect-ratio,
+      ..utils.page-args-from-aspect-ratio(aspect-ratio),
       header-ascent: 0em,
       footer-descent: 0em,
       margin: (top: 2em, bottom: 1.25em, x: 2em),
