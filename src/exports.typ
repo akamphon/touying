@@ -25,6 +25,7 @@
   speaker-note,
   touying-equation,
   touying-fn-wrapper,
+  touying-fn-wrapper-raw,
   touying-mitex,
   touying-raw,
   touying-recall,
@@ -46,3 +47,5 @@
 #import "pdfpc.typ"
 #import "components.typ": cols, lazy-h, lazy-layout, lazy-v, side-by-side
 #import "components.typ"
+
+#import "extern.typ": touying-disable-warnings, touying-enable-warnings
