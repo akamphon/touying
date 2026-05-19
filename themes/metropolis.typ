@@ -144,7 +144,7 @@
       {
         components.left-and-right(
           {
-            text(size: 1.3em, weight: "medium", info.title)
+            text(size: 1.4em, weight: "regular", info.title)
             if info.subtitle != none {
               v(0em)
               text(size: 1.2em, info.subtitle)
