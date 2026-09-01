@@ -19,13 +19,19 @@ jobs:
           tool: cargo-binstall
 
       - name: Install tytanic
-        run: cargo binstall tytanic@0.3.3 -y
+        run: cargo binstall tytanic@0.4.0 -y
 
       - name: Setup typst
         uses: typst-community/setup-typst@v4
 
       - name: Run test suite
         run: tt run
+
+      - name: Run bundle regression test
+        run: >-
+          typst compile --features bundle --format bundle --root .
+          tests/issues/i406-bundle-headings/bundle.typ
+          "$RUNNER_TEMP/i406-bundle"
 
       - name: Archive diffs
         uses: actions/upload-artifact@v4

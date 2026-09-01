@@ -385,12 +385,51 @@
 /// -> function
 #let method-wrapper(fn) = (self: none, ..args) => fn(..args)
 
+/// The default `cover` method (wraps Typst's own `hide`) and touying's default value
+/// for `config-methods(cover: ..)`. Exposed as a stable, comparable value (rather than
+/// only living as a private default in `configs.typ`) so other code can check
+/// `self.methods.cover == utils.hiding-cover` as a best-effort way to tell whether
+/// covering is genuinely invisible, as opposed to a visual-only style like
+/// `color-changing-cover`/`alpha-changing-cover`.
+///
+/// This is only identity comparison, so it cannot recognize a hand-written cover
+/// function that happens to also just call `hide` - use the `cover-hides-footnote`
+/// config to override the result explicitly where that distinction matters.
+///
+/// -> function
+#let hiding-cover = method-wrapper(hide)
+
+/// Resolve the `cover-hides-footnote` config: whether the presentation's configured
+/// `cover` method genuinely hides content (as opposed to a visual-only style like
+/// `color-changing-cover`/`alpha-changing-cover`). Explicit `true`/`false` is
+/// returned as-is; `auto` (the default) falls back to comparing `self.methods.cover`
+/// against `hiding-cover` by identity - see `hiding-cover` for that check's limits.
+///
+/// - self (dictionary): The presentation context.
+///
+/// -> bool
+#let cover-hides-footnote(self) = {
+  let configured = self.at("cover-hides-footnote", default: auto)
+  if configured == auto {
+    self.methods.cover == hiding-cover
+  } else {
+    configured
+  }
+}
+
 
 /// Extract all method functions from `self` and bind `self` as their first named argument.
 ///
 /// Returns a dictionary of ready-to-call functions where the `self` argument has already been applied. Use destructuring to get individual methods.
 ///
 /// Example: `#let (uncover, only) = utils.methods(self)` to get `uncover` and `only` methods.
+///
+/// This function is primarily intended for callback-style usage inside `context` blocks or style rules, where the top-level
+/// `#uncover`/`#only` etc. functions cannot be used. Animation methods resolve waypoint labels
+/// via `self.waypoints` (populated before rendering) and check `self.subslide` directly.
+///
+/// Note: these methods do not register fn-wrappers in the touying parser, so they do not
+/// contribute to the subslide count.
 ///
 /// - self (dictionary): The presentation context (must have a `methods` key containing a dictionary of functions).
 ///
@@ -401,48 +440,10 @@
     "methods" in self and type(self.methods) == dictionary,
     message: "self.methods must be a dictionary",
   )
-  // Animation methods that manage their own subslide visibility.
-  // In callback-style slides the parser's pause/cover logic (driven by
-  // #waypoint jumps) would incorrectly hide method-resolved content based on
-  // source position.  Wrapping the result in a fn-wrapper escapes pause zones
-  // (the parser always pushes fn-wrappers to `result`).
-  //
-  // The type check ensures non-content results (e.g. CeTZ draw-command arrays)
-  // are returned as-is so external packages keep working.
-  let animation-keys = (
-    "uncover",
-    "only",
-    "effect",
-    "alternatives",
-    "alternatives-match",
-    "alternatives-fn",
-    "alternatives-cases",
-    "item-by-item",
-  )
   let methods = (:)
   for key in self.methods.keys() {
     if type(self.methods.at(key)) == function {
-      if key in animation-keys {
-        methods.insert(key, (..args) => {
-          let result = self.methods.at(key)(self: self, ..args)
-          if type(result) == content {
-            [#metadata((
-              kind: "touying-fn-wrapper",
-              fn: (self: none) => result,
-              args: arguments(),
-              last-subslide: none,
-              repetitions: none,
-            ))<touying-temporary-mark>]
-          } else {
-            result
-          }
-        })
-      } else {
-        methods.insert(key, (..args) => self.methods.at(key)(
-          self: self,
-          ..args,
-        ))
-      }
+      methods.insert(key, (..args) => self.methods.at(key)(self: self, ..args))
     }
   }
   return methods
@@ -543,16 +544,34 @@
 ///
 /// -> content
 #let current-heading(level: auto, hierachical: true, depth: 9999) = {
+  let heading-selector = {
+    // In normal typst documents, `query(heading)` suffices to select all
+    // headings. When using bundle export, this would result in the headings
+    // of other documents messing up the selection (see #406).
+    // We solve this restricting the `heading` selector to only the current
+    // document, with a trick mentioned in a Typst forum post:
+    // https://forum.typst.app/t/how-to-query-headings-in-current-document/9308
+    // This has the disadvantage that it does not work in "normal" documents
+    // (non-bundle exports), so we make a case distinction.
+
+    let current-and-prev-documents = query(selector(document).before(here()))
+    if current-and-prev-documents.len() > 0 {
+      let current-doc = current-and-prev-documents.last().location()
+      selector(heading).within(current-doc)
+    } else {
+      selector(heading)
+    }
+  }
   let current-page = here().page()
   if not hierachical and level != auto {
-    let headings = query(heading).filter(h => (
+    let headings = query(heading-selector).filter(h => (
       h.location().page() <= current-page
         and h.level <= depth
         and h.level == level
     ))
     return headings.at(-1, default: none)
   }
-  let headings = query(heading).filter(h => (
+  let headings = query(heading-selector).filter(h => (
     h.location().page() <= current-page and h.level <= depth
   ))
   if headings == () {
@@ -2726,6 +2745,7 @@
     es: "Índice",
     et: "Sisukord",
     fi: "Sisällys",
+    fr: "Plan",
     ja: "目次",
     pl: "Agenda",
     ru: "Содержание",
