@@ -285,7 +285,7 @@
           alpha: 20%,
           title: none,
           indent: (2em,),
-	  vspace: (1em,),
+	  vspace: (0.5em,),
           depth: 1,
 	)
     body
